@@ -1,5 +1,8 @@
 # envlens
 
+[![CI](https://github.com/sonsriver4815/envlens/actions/workflows/ci.yml/badge.svg)](https://github.com/sonsriver4815/envlens/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 環境変数の不足、古い記述、ドキュメント漏れ、危険なサンプル値を、セットアップでつまずく前に見つけます。
 
 `envlens` は、環境変数の情報が散らばりやすい場所をまとめて確認する CLI です。`.env.example`、ソースコード、README/docs、Docker Compose、GitHub Actions、デプロイ設定を照合し、「このプロジェクトを動かすには何を設定すればよいか」を明確にします。

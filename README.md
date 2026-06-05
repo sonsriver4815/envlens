@@ -1,5 +1,8 @@
 # envlens
 
+[![CI](https://github.com/sonsriver4815/envlens/actions/workflows/ci.yml/badge.svg)](https://github.com/sonsriver4815/envlens/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Catch missing, stale, undocumented, and risky environment variables before they break someone else's setup.
 
 `envlens` checks the places env vars tend to drift: `.env.example`, source code, README/docs, Docker Compose, GitHub Actions, and deployment config. It gives contributors a clear answer to a simple question: "What do I need to set before this project runs?"
