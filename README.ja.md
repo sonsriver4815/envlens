@@ -39,6 +39,18 @@ WARN undocumented STRIPE_WEBHOOK_SECRET
 
 ## Install
 
+npm 公開前は、ローカルに clone して実行します。
+
+```bash
+git clone https://github.com/sonsriver4815/envlens.git
+cd envlens
+npm install
+npm run build
+node packages/cli/dist/index.js doctor .
+```
+
+初回の npm release 後は、通常の npm package として使えます。
+
 ```bash
 npm install -D envlens
 npx envlens doctor

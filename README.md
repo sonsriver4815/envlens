@@ -39,6 +39,18 @@ WARN undocumented STRIPE_WEBHOOK_SECRET
 
 ## Install
 
+Until the package is published to npm, run it from a local checkout:
+
+```bash
+git clone https://github.com/sonsriver4815/envlens.git
+cd envlens
+npm install
+npm run build
+node packages/cli/dist/index.js doctor .
+```
+
+After the first npm release:
+
 ```bash
 npm install -D envlens
 npx envlens doctor
