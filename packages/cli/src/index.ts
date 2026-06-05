@@ -15,7 +15,7 @@ const program = new Command();
 program
   .name("configenvy")
   .description("Find missing, unused, undocumented, and risky environment variables.")
-  .version("0.1.0");
+  .version("0.1.1");
 
 program
   .command("doctor")

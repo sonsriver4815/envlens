@@ -1,6 +1,6 @@
 {
   "name": "configenvy",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Find missing, unused, undocumented, and risky environment variables before setup breaks.",
   "type": "module",
   "repository": {
@@ -32,7 +32,7 @@
     "build": "tsup src/index.ts --format esm --dts --clean"
   },
   "dependencies": {
-    "@configenvy/core": "0.1.0",
+    "@configenvy/core": "0.1.1",
     "commander": "^12.1.0"
   },
   "keywords": [
