@@ -10,7 +10,7 @@ Catch missing, stale, undocumented, and risky environment variables before they 
 ![configenvy workflow](docs/assets/configenvy-flow.svg)
 
 ```bash
-npx configenvy doctor
+npx configenvy@latest doctor
 ```
 
 Without configenvy, setup failures often show up late:
@@ -39,21 +39,17 @@ WARN undocumented STRIPE_WEBHOOK_SECRET
 
 ## Install
 
-Until the package is published to npm, run it from a local checkout:
+Run the latest published CLI with npx:
 
 ```bash
-git clone https://github.com/sonsriver4815/configenvy.git
-cd configenvy
-npm install
-npm run build
-node packages/cli/dist/index.js doctor .
+npx configenvy@latest doctor
 ```
 
-After the first npm release:
+Or install it in a project:
 
 ```bash
 npm install -D configenvy
-npx configenvy doctor
+npx configenvy@latest doctor
 ```
 
 ## Quick Start

@@ -10,7 +10,7 @@
 ![configenvy の仕組み](docs/assets/configenvy-flow-ja.svg)
 
 ```bash
-npx configenvy doctor
+npx configenvy@latest doctor
 ```
 
 環境変数の不足は、実行して初めて気づくことがよくあります。
@@ -39,21 +39,17 @@ WARN undocumented STRIPE_WEBHOOK_SECRET
 
 ## Install
 
-npm 公開前は、ローカルに clone して実行します。
+公開済みの最新版CLIを npx で実行できます。
 
 ```bash
-git clone https://github.com/sonsriver4815/configenvy.git
-cd configenvy
-npm install
-npm run build
-node packages/cli/dist/index.js doctor .
+npx configenvy@latest doctor
 ```
 
-初回の npm release 後は、通常の npm package として使えます。
+プロジェクトにインストールして使うこともできます。
 
 ```bash
 npm install -D configenvy
-npx configenvy doctor
+npx configenvy@latest doctor
 ```
 
 ## Quick Start
