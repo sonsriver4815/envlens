@@ -13,7 +13,7 @@
   },
   "homepage": "https://github.com/sonsriver4815/configenvy#readme",
   "bin": {
-    "configenvy": "./dist/index.js"
+    "configenvy": "dist/index.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
