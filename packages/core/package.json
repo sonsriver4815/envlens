@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "description": "Core scanners and diagnostics for configenvy.",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sonsriver4815/configenvy.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/sonsriver4815/configenvy/issues"
+  },
+  "homepage": "https://github.com/sonsriver4815/configenvy#readme",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -11,8 +20,19 @@
       "import": "./dist/index.js"
     }
   },
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts --clean"
   },
+  "keywords": [
+    "env",
+    "dotenv",
+    "configuration",
+    "developer-tools"
+  ],
   "license": "MIT"
 }
