@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="420" viewBox="0 0 960 420" role="img" aria-labelledby="title desc">
-  <title id="title">envlens の処理の流れ</title>
-  <desc id="desc">env example、ソースコード、ドキュメント、CI設定を envlens doctor が照合し、不足、未記載、危険な環境変数をレポートする図。</desc>
+  <title id="title">configenvy の処理の流れ</title>
+  <desc id="desc">env example、ソースコード、ドキュメント、CI設定を configenvy doctor が照合し、不足、未記載、危険な環境変数をレポートする図。</desc>
   <defs>
     <style>
       .bg { fill: #f8fafc; }
@@ -24,7 +24,7 @@
 
   <rect class="bg" x="0" y="0" width="960" height="420" rx="24"/>
 
-  <text class="label" x="48" y="48">envlens はセットアップ前に環境変数のズレを見つけます</text>
+  <text class="label" x="48" y="48">configenvy はセットアップ前に環境変数のズレを見つけます</text>
   <text class="muted" x="48" y="76">サンプル、コード、ドキュメント、CI設定をローカルでまとめて照合します。</text>
 
   <rect class="panel" x="48" y="112" width="230" height="70" rx="12"/>
@@ -44,7 +44,7 @@
   <path class="arrow" d="M 288 331 C 340 331, 360 260, 410 240"/>
 
   <rect class="panel-strong" x="416" y="160" width="180" height="120" rx="18"/>
-  <text class="strong-label" x="453" y="206">envlens</text>
+  <text class="strong-label" x="443" y="206">configenvy</text>
   <text class="strong-small code" x="454" y="232">doctor</text>
   <text class="strong-small" x="447" y="256">ローカル診断</text>
 

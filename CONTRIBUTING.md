@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping improve envlens.
+Thanks for helping improve configenvy.
 
 ## Development
 

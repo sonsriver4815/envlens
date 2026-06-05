@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { buildMarkdownTable, explainVariable, scanProject } from "../src/index";
 
 async function fixture(files: Record<string, string>): Promise<string> {
-  const root = join(tmpdir(), `envlens-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+  const root = join(tmpdir(), `configenvy-${Date.now()}-${Math.random().toString(16).slice(2)}`);
   for (const [name, content] of Object.entries(files)) {
     const fullPath = join(root, name);
     await mkdir(join(fullPath, ".."), { recursive: true });
@@ -14,7 +14,7 @@ async function fixture(files: Record<string, string>): Promise<string> {
   return root;
 }
 
-describe("envlens core", () => {
+describe("configenvy core", () => {
   it("finds missing examples and docs", async () => {
     const root = await fixture({
       "src/index.ts": "console.log(process.env.DATABASE_URL)",
@@ -102,16 +102,16 @@ describe("envlens core", () => {
 
   it("fails loudly for invalid config", async () => {
     const root = await fixture({
-      "envlens.config.json": "{ invalid",
+      "configenvy.config.json": "{ invalid",
       ".env.example": "APP_URL=http://localhost:3000\n"
     });
 
-    await expect(scanProject({ rootDir: root })).rejects.toThrow("Failed to read envlens.config.json");
+    await expect(scanProject({ rootDir: root })).rejects.toThrow("Failed to read configenvy.config.json");
   });
 
   it("does not mark configured optional variables as unused", async () => {
     const root = await fixture({
-      "envlens.config.json": JSON.stringify({ optional: ["LOG_LEVEL"] }),
+      "configenvy.config.json": JSON.stringify({ optional: ["LOG_LEVEL"] }),
       ".env.example": "LOG_LEVEL=info\n",
       "README.md": "LOG_LEVEL controls logging verbosity."
     });

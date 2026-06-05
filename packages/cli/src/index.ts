@@ -2,7 +2,7 @@
 import { writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { Command } from "commander";
-import { buildMarkdownTable, explainVariable, scanProject, toJson, type Diagnostic } from "@envlens/core";
+import { buildMarkdownTable, explainVariable, scanProject, toJson, type Diagnostic } from "@configenvy/core";
 
 type DoctorOptions = {
   format?: "text" | "json";
@@ -13,7 +13,7 @@ type DoctorOptions = {
 const program = new Command();
 
 program
-  .name("envlens")
+  .name("configenvy")
   .description("Find missing, unused, undocumented, and risky environment variables.")
   .version("0.1.0");
 
@@ -80,7 +80,7 @@ async function runDoctor(projectPath: string, options: DoctorOptions): Promise<v
 
 function printHumanReport(diagnostics: Diagnostic[]): void {
   if (diagnostics.length === 0) {
-    console.log("PASS envlens found no environment variable issues.");
+    console.log("PASS configenvy found no environment variable issues.");
     return;
   }
 

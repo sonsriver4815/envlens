@@ -282,7 +282,7 @@ function extractReferences(
 
 async function readConfig(rootDir: string): Promise<EnvlensConfig> {
   const path = await import("node:path");
-  const configPath = path.join(rootDir, "envlens.config.json");
+  const configPath = path.join(rootDir, "configenvy.config.json");
   try {
     const raw = await readText(configPath);
     const parsed = JSON.parse(raw) as Partial<EnvlensConfig>;
@@ -296,7 +296,7 @@ async function readConfig(rootDir: string): Promise<EnvlensConfig> {
     if (isNodeError(error) && error.code === "ENOENT") {
       return defaultConfig;
     }
-    throw new Error(`Failed to read envlens.config.json: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(`Failed to read configenvy.config.json: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 

@@ -1,25 +1,25 @@
-# envlens
+# configenvy
 
-[![CI](https://github.com/sonsriver4815/envlens/actions/workflows/ci.yml/badge.svg)](https://github.com/sonsriver4815/envlens/actions/workflows/ci.yml)
+[![CI](https://github.com/sonsriver4815/configenvy/actions/workflows/ci.yml/badge.svg)](https://github.com/sonsriver4815/configenvy/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Catch missing, stale, undocumented, and risky environment variables before they break someone else's setup.
 
-`envlens` checks the places env vars tend to drift: `.env.example`, source code, README/docs, Docker Compose, GitHub Actions, and deployment config. It gives contributors a clear answer to a simple question: "What do I need to set before this project runs?"
+`configenvy` checks the places env vars tend to drift: `.env.example`, source code, README/docs, Docker Compose, GitHub Actions, and deployment config. It gives contributors a clear answer to a simple question: "What do I need to set before this project runs?"
 
-![envlens workflow](docs/assets/envlens-flow.svg)
+![configenvy workflow](docs/assets/configenvy-flow.svg)
 
 ```bash
-npx envlens doctor
+npx configenvy doctor
 ```
 
-Without envlens, setup failures often show up late:
+Without configenvy, setup failures often show up late:
 
 ```text
 Error: DATABASE_URL is required
 ```
 
-With envlens, the missing contract is visible up front:
+With configenvy, the missing contract is visible up front:
 
 ```text
 FAIL missing-example DATABASE_URL
@@ -42,8 +42,8 @@ WARN undocumented STRIPE_WEBHOOK_SECRET
 Until the package is published to npm, run it from a local checkout:
 
 ```bash
-git clone https://github.com/sonsriver4815/envlens.git
-cd envlens
+git clone https://github.com/sonsriver4815/configenvy.git
+cd configenvy
 npm install
 npm run build
 node packages/cli/dist/index.js doctor .
@@ -52,8 +52,8 @@ node packages/cli/dist/index.js doctor .
 After the first npm release:
 
 ```bash
-npm install -D envlens
-npx envlens doctor
+npm install -D configenvy
+npx configenvy doctor
 ```
 
 ## Quick Start
@@ -69,15 +69,15 @@ node packages/cli/dist/index.js explain DATABASE_URL examples/nextjs
 ## CLI
 
 ```bash
-envlens doctor [path]
-envlens doctor --format json [path]
-envlens doctor --strict [path]
-envlens check --ci [path]
-envlens table [path] --out README.env.md
-envlens explain DATABASE_URL [path]
+configenvy doctor [path]
+configenvy doctor --format json [path]
+configenvy doctor --strict [path]
+configenvy check --ci [path]
+configenvy table [path] --out README.env.md
+configenvy explain DATABASE_URL [path]
 ```
 
-## What envlens checks
+## What configenvy checks
 
 - Env example files: `.env.example`, `.env.sample`, `.env.template`
 - Source code: `src/**/*.{js,jsx,ts,tsx,mjs,cjs}`
@@ -106,7 +106,7 @@ envlens explain DATABASE_URL [path]
 
 ## Configuration
 
-Add `envlens.config.json` to your project root when you want to tune the defaults:
+Add `configenvy.config.json` to your project root when you want to tune the defaults:
 
 ```json
 {
@@ -119,11 +119,11 @@ Add `envlens.config.json` to your project root when you want to tune the default
 
 ## Why
 
-Most setup failures are not mysterious. A variable was added in code but not in `.env.example`. A README table went stale. A token-like value slipped into a sample file. `envlens` keeps that small contract honest.
+Most setup failures are not mysterious. A variable was added in code but not in `.env.example`. A README table went stale. A token-like value slipped into a sample file. `configenvy` keeps that small contract honest.
 
 ## Limitations
 
-`envlens` uses lightweight static extraction in v0.1. It does not fully parse every language or framework, and it may miss dynamic names such as `process.env[prefix + "_TOKEN"]`. It is meant to catch the common setup-breaking drift first, not replace a full secrets scanner or type-aware compiler plugin.
+`configenvy` uses lightweight static extraction in v0.1. It does not fully parse every language or framework, and it may miss dynamic names such as `process.env[prefix + "_TOKEN"]`. It is meant to catch the common setup-breaking drift first, not replace a full secrets scanner or type-aware compiler plugin.
 
 ## Roadmap
 
@@ -135,7 +135,7 @@ Most setup failures are not mysterious. A variable was added in code but not in 
 
 ## Privacy and safety
 
-`envlens` skips `.env` and non-example `.env.*` files by default. It runs locally, does not upload files, and does not call external APIs.
+`configenvy` skips `.env` and non-example `.env.*` files by default. It runs locally, does not upload files, and does not call external APIs.
 
 ## License
 

@@ -1,10 +1,10 @@
 # FAQ
 
-## Does envlens read `.env`?
+## Does configenvy read `.env`?
 
-No. envlens intentionally skips `.env` and non-example `.env.*` files.
+No. configenvy intentionally skips `.env` and non-example `.env.*` files.
 
-## Does envlens upload files?
+## Does configenvy upload files?
 
 No. The CLI runs locally and does not call external APIs.
 

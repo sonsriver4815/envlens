@@ -1,5 +1,5 @@
 {
-  "name": "envlens-repo",
+  "name": "configenvy-repo",
   "private": true,
   "version": "0.1.0",
   "description": "Find missing, unused, undocumented, and risky environment variables before your users hit setup errors.",
@@ -9,7 +9,7 @@
     "packages/cli"
   ],
   "scripts": {
-    "build": "npm run build -w @envlens/core && npm run build -w envlens",
+    "build": "npm run build -w @configenvy/core && npm run build -w configenvy",
     "test": "vitest run",
     "lint": "tsc -b --pretty false",
     "check": "npm run lint && npm test && npm run build"

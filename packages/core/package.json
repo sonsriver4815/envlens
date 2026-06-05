@@ -1,7 +1,7 @@
 {
-  "name": "@envlens/core",
+  "name": "@configenvy/core",
   "version": "0.1.0",
-  "description": "Core scanners and diagnostics for envlens.",
+  "description": "Core scanners and diagnostics for configenvy.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

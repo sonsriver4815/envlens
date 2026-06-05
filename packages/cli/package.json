@@ -1,10 +1,10 @@
 {
-  "name": "envlens",
+  "name": "configenvy",
   "version": "0.1.0",
   "description": "Find missing, unused, undocumented, and risky environment variables before setup breaks.",
   "type": "module",
   "bin": {
-    "envlens": "./dist/index.js"
+    "configenvy": "./dist/index.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -18,7 +18,7 @@
     "build": "tsup src/index.ts --format esm --dts --clean"
   },
   "dependencies": {
-    "@envlens/core": "0.1.0",
+    "@configenvy/core": "0.1.0",
     "commander": "^12.1.0"
   },
   "license": "MIT"
