@@ -1,6 +1,9 @@
 # configenvy
 
 [![CI](https://github.com/sonsriver4815/configenvy/actions/workflows/ci.yml/badge.svg)](https://github.com/sonsriver4815/configenvy/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/configenvy.svg)](https://www.npmjs.com/package/configenvy)
+[![npm downloads](https://img.shields.io/npm/dm/configenvy.svg)](https://www.npmjs.com/package/configenvy)
+[![GitHub Release](https://img.shields.io/github/v/release/sonsriver4815/configenvy)](https://github.com/sonsriver4815/configenvy/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 環境変数の不足、古い記述、ドキュメント漏れ、危険なサンプル値を、セットアップでつまずく前に見つけます。
