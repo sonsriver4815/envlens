@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="420" viewBox="0 0 960 420" role="img" aria-labelledby="title desc">
+  <title id="title">envlens の処理の流れ</title>
+  <desc id="desc">env example、ソースコード、ドキュメント、CI設定を envlens doctor が照合し、不足、未記載、危険な環境変数をレポートする図。</desc>
+  <defs>
+    <style>
+      .bg { fill: #f8fafc; }
+      .panel { fill: #ffffff; stroke: #cbd5e1; stroke-width: 2; }
+      .panel-strong { fill: #0f172a; stroke: #0f172a; stroke-width: 2; }
+      .muted { fill: #64748b; font: 16px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", "Meiryo", sans-serif; }
+      .label { fill: #0f172a; font: 700 20px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", "Meiryo", sans-serif; }
+      .small { fill: #334155; font: 14px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", "Meiryo", sans-serif; }
+      .strong-label { fill: #ffffff; font: 700 22px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", "Meiryo", sans-serif; }
+      .strong-small { fill: #cbd5e1; font: 14px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", "Meiryo", sans-serif; }
+      .arrow { fill: none; stroke: #475569; stroke-width: 3; marker-end: url(#arrowhead); }
+      .ok { fill: #dcfce7; stroke: #22c55e; }
+      .warn { fill: #fef3c7; stroke: #f59e0b; }
+      .fail { fill: #fee2e2; stroke: #ef4444; }
+      .code { font: 13px ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 z" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="960" height="420" rx="24"/>
+
+  <text class="label" x="48" y="48">envlens はセットアップ前に環境変数のズレを見つけます</text>
+  <text class="muted" x="48" y="76">サンプル、コード、ドキュメント、CI設定をローカルでまとめて照合します。</text>
+
+  <rect class="panel" x="48" y="112" width="230" height="70" rx="12"/>
+  <text class="label" x="72" y="142">env サンプル</text>
+  <text class="small code" x="72" y="164">.env.example, .env.sample</text>
+
+  <rect class="panel" x="48" y="204" width="230" height="70" rx="12"/>
+  <text class="label" x="72" y="234">ソースコード</text>
+  <text class="small code" x="72" y="256">process.env.DATABASE_URL</text>
+
+  <rect class="panel" x="48" y="296" width="230" height="70" rx="12"/>
+  <text class="label" x="72" y="326">ドキュメントとCI</text>
+  <text class="small code" x="72" y="348">README, Docker, Actions</text>
+
+  <path class="arrow" d="M 288 147 C 340 147, 360 192, 410 204"/>
+  <path class="arrow" d="M 288 239 C 342 239, 360 230, 410 222"/>
+  <path class="arrow" d="M 288 331 C 340 331, 360 260, 410 240"/>
+
+  <rect class="panel-strong" x="416" y="160" width="180" height="120" rx="18"/>
+  <text class="strong-label" x="453" y="206">envlens</text>
+  <text class="strong-small code" x="454" y="232">doctor</text>
+  <text class="strong-small" x="447" y="256">ローカル診断</text>
+
+  <path class="arrow" d="M 606 220 C 650 220, 674 220, 716 220"/>
+
+  <rect class="panel ok" x="728" y="104" width="184" height="58" rx="12"/>
+  <text class="small code" x="752" y="130">PASS 記載済み</text>
+  <text class="small" x="752" y="149">セットアップ準備OK</text>
+
+  <rect class="panel warn" x="728" y="182" width="184" height="58" rx="12"/>
+  <text class="small code" x="752" y="208">WARN 未記載</text>
+  <text class="small" x="752" y="227">README更新が必要</text>
+
+  <rect class="panel fail" x="728" y="260" width="184" height="58" rx="12"/>
+  <text class="small code" x="752" y="286">FAIL サンプル不足</text>
+  <text class="small" x="752" y="305">.env.example が古い</text>
+
+  <rect class="panel fail" x="728" y="338" width="184" height="44" rx="12"/>
+  <text class="small code" x="752" y="366">FAIL 危険な値</text>
+</svg>

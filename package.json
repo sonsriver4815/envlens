@@ -1,0 +1,31 @@
+{
+  "name": "envlens-repo",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Find missing, unused, undocumented, and risky environment variables before your users hit setup errors.",
+  "type": "module",
+  "workspaces": [
+    "packages/core",
+    "packages/cli"
+  ],
+  "scripts": {
+    "build": "npm run build -w @envlens/core && npm run build -w envlens",
+    "test": "vitest run",
+    "lint": "tsc -b --pretty false",
+    "check": "npm run lint && npm test && npm run build"
+  },
+  "keywords": [
+    "env",
+    "dotenv",
+    "developer-tools",
+    "cli",
+    "documentation"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

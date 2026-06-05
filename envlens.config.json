@@ -1,0 +1,17 @@
+{
+  "required": [],
+  "optional": [],
+  "ignore": [
+    "APP_PORT",
+    "APP_URL",
+    "DATABASE_URL",
+    "NEXT_PUBLIC_APP_URL",
+    "NPM_TOKEN",
+    "OPENAI_API_KEY",
+    "POSTGRES_PASSWORD",
+    "STRIPE_WEBHOOK_SECRET",
+    "UNUSED_FLAG",
+    "VITE_PUBLIC_URL"
+  ],
+  "docs": ["README.md", "docs"]
+}

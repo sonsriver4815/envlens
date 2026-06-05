@@ -1,0 +1,11 @@
+services:
+  app:
+    image: example/app
+    ports:
+      - "${APP_PORT}:3000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}

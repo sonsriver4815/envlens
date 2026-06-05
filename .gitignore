@@ -1,0 +1,14 @@
+node_modules
+dist
+coverage
+*.tsbuildinfo
+vitest.config.js
+vitest.config.d.ts
+packages/**/*.test.js
+packages/**/*.test.d.ts
+*.log
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template

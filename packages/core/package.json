@@ -1,0 +1,18 @@
+{
+  "name": "@envlens/core",
+  "version": "0.1.0",
+  "description": "Core scanners and diagnostics for envlens.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean"
+  },
+  "license": "MIT"
+}
