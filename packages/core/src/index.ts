@@ -6,6 +6,7 @@ export type EnvReference = {
   line: number;
   kind: EnvSourceKind;
   value?: string;
+  description?: string;
 };
 
 export type DiagnosticCode =
@@ -107,17 +108,18 @@ export function buildMarkdownTable(result: ScanResult): string {
     const inCode = refs.some((reference) => reference.kind === "code") ? "yes" : "no";
     const inDocs = refs.some((reference) => reference.kind === "docs") ? "yes" : "no";
     const inCi = refs.some((reference) => reference.kind === "ci" || reference.kind === "config") ? "yes" : "no";
+    const description = refs.find((reference) => reference.kind === "example" && reference.description)?.description;
     const issues = result.diagnostics
       .filter((diagnostic) => diagnostic.variable === variable)
       .map((diagnostic) => diagnostic.code)
       .join(", ");
 
-    return `| ${variable} | ${inExample} | ${inCode} | ${inDocs} | ${inCi} | ${issues || "-"} |`;
+    return `| ${markdownTableCell(variable)} | ${inExample} | ${inCode} | ${inDocs} | ${inCi} | ${markdownTableCell(description ?? "-")} | ${markdownTableCell(issues || "-")} |`;
   });
 
   return [
-    "| Variable | .env example | Code | Docs | CI/config | Issues |",
-    "| --- | --- | --- | --- | --- | --- |",
+    "| Variable | .env example | Code | Docs | CI/config | Description | Issues |",
+    "| --- | --- | --- | --- | --- | --- | --- |",
     ...rows
   ].join("\n");
 }
@@ -141,6 +143,10 @@ export function explainVariable(result: ScanResult, variable: string): string {
   }
 
   return lines.join("\n");
+}
+
+function markdownTableCell(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/\|/g, "\\|").replace(/\r?\n/g, " ");
 }
 
 export function toJson(result: ScanResult): string {
@@ -221,12 +227,42 @@ function buildDiagnostics(references: EnvReference[], config: EnvlensConfig, str
 
 async function parseDotenvFile(file: string, relativePath: string): Promise<EnvReference[]> {
   const content = await readText(file);
-  return content.split(/\r?\n/).flatMap((line, index) => {
-    const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
-    if (!match) return [];
-    const value = match[2]?.replace(/^['"]|['"]$/g, "");
-    return [{ name: match[1], value, file: relativePath, line: index + 1, kind: "example" as const }];
-  });
+  const references: EnvReference[] = [];
+  let pendingComments: string[] = [];
+
+  for (const [index, line] of content.split(/\r?\n/).entries()) {
+    const comment = parseCommentLine(line);
+    if (comment !== null) {
+      pendingComments.push(comment);
+      continue;
+    }
+
+    if (line.trim() === "") {
+      pendingComments = [];
+      continue;
+    }
+
+    const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=(.*)$/);
+    if (!match) {
+      pendingComments = [];
+      continue;
+    }
+
+    const rawValue = match[2] ?? "";
+    const inline = splitInlineComment(rawValue);
+    const description = inline.comment ?? (pendingComments.length > 0 ? pendingComments.join(" ") : undefined);
+    references.push({
+      name: match[1],
+      value: stripQuotes(inline.value.trim()),
+      file: relativePath,
+      line: index + 1,
+      kind: "example" as const,
+      ...(description ? { description } : {})
+    });
+    pendingComments = [];
+  }
+
+  return references;
 }
 
 async function parseCodeFile(file: string, relativePath: string): Promise<EnvReference[]> {
@@ -253,6 +289,35 @@ async function parseConfigFile(file: string, relativePath: string): Promise<EnvR
     /\$\{([A-Za-z_][A-Za-z0-9_]*)\}/g,
     /\b([A-Z][A-Z0-9_]{2,})\b/g
   ]);
+}
+
+function parseCommentLine(line: string): string | null {
+  const match = line.match(/^\s*#\s?(.*)$/);
+  if (!match) return null;
+  return match[1]?.trim() ?? "";
+}
+
+function splitInlineComment(value: string): { value: string; comment?: string } {
+  let quote: "'" | "\"" | null = null;
+  for (let index = 0; index < value.length; index += 1) {
+    const char = value[index];
+    if ((char === "\"" || char === "'") && value[index - 1] !== "\\") {
+      quote = quote === char ? null : quote ?? char;
+      continue;
+    }
+    if (char === "#" && quote === null && /\s/.test(value[index - 1] ?? "")) {
+      const comment = value.slice(index + 1).trim();
+      return {
+        value: value.slice(0, index).trimEnd(),
+        ...(comment ? { comment } : {})
+      };
+    }
+  }
+  return { value };
+}
+
+function stripQuotes(value: string): string {
+  return value.replace(/^['"]|['"]$/g, "");
 }
 
 function extractReferences(

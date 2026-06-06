@@ -53,8 +53,46 @@ describe("configenvy core", () => {
     const table = buildMarkdownTable(result);
     const explanation = explainVariable(result, "VITE_PUBLIC_URL");
 
-    expect(table).toContain("| VITE_PUBLIC_URL | yes | yes | yes | no | - |");
+    expect(table).toContain("| VITE_PUBLIC_URL | yes | yes | yes | no | - | - |");
     expect(explanation).toContain("src/index.ts:1");
+  });
+
+  it("uses .env.example comments as variable descriptions", async () => {
+    const root = await fixture({
+      ".env.example": [
+        "# Postgres connection string used by the app server",
+        "DATABASE_URL=postgres://localhost:5432/app",
+        "",
+        "# Not attached after the blank line",
+        "",
+        "LOG_LEVEL= # Used for foo | bar",
+        "CALLBACK_URL=https://example.test/path#anchor",
+        "QUOTED_HASH=\"value # not a comment\""
+      ].join("\n"),
+      "README.md": "DATABASE_URL, LOG_LEVEL, CALLBACK_URL, and QUOTED_HASH are documented."
+    });
+
+    const result = await scanProject({ rootDir: root });
+    const table = buildMarkdownTable(result);
+
+    expect(result.references).toContainEqual(expect.objectContaining({
+      name: "DATABASE_URL",
+      description: "Postgres connection string used by the app server"
+    }));
+    expect(result.references).toContainEqual(expect.objectContaining({
+      name: "LOG_LEVEL",
+      description: "Used for foo | bar"
+    }));
+    expect(result.references.find((reference) => reference.name === "CALLBACK_URL")?.value).toBe(
+      "https://example.test/path#anchor"
+    );
+    expect(result.references.find((reference) => reference.name === "QUOTED_HASH")?.value).toBe("value # not a comment");
+    expect(result.references.find((reference) => reference.name === "LOG_LEVEL")?.description).toBe("Used for foo | bar");
+    expect(result.references.find((reference) => reference.name === "CALLBACK_URL")?.description).toBeUndefined();
+    expect(table).toContain(
+      "| DATABASE_URL | yes | no | yes | no | Postgres connection string used by the app server | unused-example |"
+    );
+    expect(table).toContain("| LOG_LEVEL | yes | no | yes | no | Used for foo \\| bar | unused-example |");
   });
 
   it("skips generated js when a ts sibling exists", async () => {
