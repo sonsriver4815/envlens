@@ -5,13 +5,13 @@
 [![GitHub Release](https://img.shields.io/github/v/release/sonsriver4815/configenvy)](https://github.com/sonsriver4815/configenvy/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Catch missing, stale, undocumented, and risky environment variables before they break someone else's setup.
+Catch missing, stale, undocumented, and risky env variables before they break someone else's setup.
 
 `configenvy` checks the places env vars tend to drift: `.env.example`, source code, README/docs, Docker Compose, GitHub Actions, and deployment config. It gives contributors a clear answer to a simple question: "What do I need to set before this project runs?"
 
 ![configenvy workflow](docs/assets/configenvy-flow.svg)
 
-```bash
+```powershell
 npx configenvy@latest doctor
 ```
 
@@ -34,8 +34,9 @@ WARN undocumented STRIPE_WEBHOOK_SECRET
 
 - Finds env vars used through `process.env.NAME`, `process.env["NAME"]`, `import.meta.env.NAME`, and `Deno.env.get("NAME")`.
 - Compares code usage with `.env.example`, `.env.sample`, and `.env.template`.
-- Checks whether important variables are actually mentioned in README or docs.
-- Flags example values that look like real tokens, private values, or production URLs.
+- Checks whether important variables are mentioned in README or docs.
+- Flags sample values that look like real tokens, private values, or production URLs.
+- Reuses `.env.example` comments as variable descriptions in generated tables.
 - Generates Markdown tables you can paste into a README.
 - Prints readable output for humans and JSON for scripts or CI.
 
@@ -54,9 +55,14 @@ If everything is OK, you will see:
 PASS configenvy found no environment variable issues.
 ```
 
-## Quick Start
+You can also install it in a project:
 
-`configenvy` checks whether your environment variables are listed in `.env.example` and documented where contributors expect them.
+```powershell
+npm install -D configenvy
+npx configenvy doctor .
+```
+
+## Quick Start
 
 Check the current folder:
 
@@ -64,7 +70,7 @@ Check the current folder:
 npx configenvy@latest doctor .
 ```
 
-Generate a Markdown table for your README:
+Generate a Markdown table:
 
 ```powershell
 npx configenvy@latest table .
@@ -94,7 +100,7 @@ npx configenvy@latest table "C:\path\to\your-project"
 
 ## CLI
 
-```bash
+```text
 configenvy doctor [path]
 configenvy doctor --format json [path]
 configenvy doctor --strict [path]
@@ -128,9 +134,9 @@ configenvy explain DATABASE_URL [path]
 | 0 | No issues found |
 | 1 | Warnings found |
 | 2 | Errors found, or `check --ci` failed |
-| 3 | Runtime or configuration error |
+| 3 | Runtime or config error |
 
-## Configuration
+## Config
 
 configenvy works without a config file. Add `configenvy.config.json` to your project root when you want to mark variables as required or ignore noisy ones.
 
@@ -143,12 +149,10 @@ configenvy works without a config file. Add `configenvy.config.json` to your pro
 }
 ```
 
-- `required`: environment variables that must exist
-- `optional`: environment variables that are allowed but not required
-- `ignore`: environment variables to skip
+- `required`: env variables that must exist
+- `optional`: env variables that are allowed but not required
+- `ignore`: env variables to skip
 - `docs`: README or docs paths where descriptions should be checked
-
-## Why
 
 Most setup failures are not mysterious. A variable was added in code but not in `.env.example`. A README table went stale. A token-like value slipped into a sample file. `configenvy` keeps that small contract honest.
 
@@ -167,7 +171,3 @@ Most setup failures are not mysterious. A variable was added in code but not in 
 ## Privacy and safety
 
 `configenvy` skips `.env` and non-example `.env.*` files by default. It runs locally, does not upload files, and does not call external APIs.
-
-## License
-
-MIT

@@ -7,11 +7,11 @@
 
 環境変数の不足、古い記述、ドキュメント漏れ、危険なサンプル値を、セットアップでつまずく前に見つけます。
 
-`configenvy` は、環境変数の情報が散らばりやすい場所をまとめて確認する CLI です。`.env.example`、ソースコード、README/docs、Docker Compose、GitHub Actions、デプロイ設定を照合し、「このプロジェクトを動かすには何を設定すればよいか」を明確にします。
+`configenvy` は、環境変数の情報が散らばりやすい場所をまとめて確認するCLIです。`.env.example`、ソースコード、README/docs、Docker Compose、GitHub Actions、デプロイ設定を照合し、「このプロジェクトを動かすには何を設定すればよいか」を明確にします。
 
 ![configenvy の仕組み](docs/assets/configenvy-flow-ja.svg)
 
-```bash
+```powershell
 npx configenvy@latest doctor
 ```
 
@@ -35,7 +35,8 @@ WARN undocumented STRIPE_WEBHOOK_SECRET
 - `process.env.NAME`、`process.env["NAME"]`、`import.meta.env.NAME`、`Deno.env.get("NAME")` で参照されている環境変数を検出します。
 - コード内の利用状況と `.env.example`、`.env.sample`、`.env.template` を比較します。
 - 重要な環境変数が README や docs に書かれているか確認します。
-- 実在しそうなトークン、秘密値、本番 URL など、サンプルとして危険な値を検出します。
+- 実在しそうなトークン、秘密値、本番URLなど、サンプルとして危険な値を検出します。
+- `.env.example` のコメントを、生成テーブルの説明文として使えます。
 - README に貼り付けやすい Markdown 表を生成します。
 - 人が読むための通常出力と、CI やスクリプト向けの JSON 出力に対応します。
 
@@ -54,11 +55,16 @@ npx configenvy@latest doctor .
 PASS configenvy found no environment variable issues.
 ```
 
+プロジェクトにインストールして使うこともできます。
+
+```powershell
+npm install -D configenvy
+npx configenvy doctor .
+```
+
 ## Quick Start
 
-`configenvy` は、環境変数が `.env.example` に書かれているか、README や docs に説明があるかを確認します。
-
-今いるフォルダをチェック:
+今いるフォルダを確認:
 
 ```powershell
 npx configenvy@latest doctor .
@@ -76,7 +82,7 @@ npx configenvy@latest table .
 npx configenvy@latest table . --out README.env.md
 ```
 
-1つの環境変数だけ調べる:
+1つの環境変数について説明:
 
 ```powershell
 npx configenvy@latest explain DATABASE_URL .
@@ -94,7 +100,7 @@ npx configenvy@latest table "C:\path\to\your-project"
 
 ## CLI
 
-```bash
+```text
 configenvy doctor [path]
 configenvy doctor --format json [path]
 configenvy doctor --strict [path]
@@ -105,10 +111,10 @@ configenvy explain DATABASE_URL [path]
 
 ## What configenvy checks
 
-- env サンプル: `.env.example`、`.env.sample`、`.env.template`
+- envサンプル: `.env.example`、`.env.sample`、`.env.template`
 - ソースコード: `src/**/*.{js,jsx,ts,tsx,mjs,cjs}`
 - ドキュメント: `README.md` と設定された docs パス
-- CI / 実行環境の設定: `.github/workflows/*.yml`、Docker Compose ファイル、`vercel.json`
+- CI と実行設定: `.github/workflows/*.yml`、Docker Compose、`vercel.json`
 
 ## Supported patterns
 
@@ -130,9 +136,9 @@ configenvy explain DATABASE_URL [path]
 | 2 | error あり、または `check --ci` が失敗 |
 | 3 | 実行時エラーまたは設定エラー |
 
-## Configuration
+## Config
 
-設定なしでも使えます。必須の環境変数や無視したい変数を指定したい場合は、プロジェクトルートに `configenvy.config.json` を置きます。
+設定ファイルなしでも使えます。必須変数を明示したい場合や、ノイズになる変数を無視したい場合は、プロジェクトルートに `configenvy.config.json` を置きます。
 
 ```json
 {
@@ -143,31 +149,25 @@ configenvy explain DATABASE_URL [path]
 }
 ```
 
-- `required`: 必ず必要な環境変数
-- `optional`: 任意の環境変数
-- `ignore`: チェックしない環境変数
-- `docs`: 説明を探すREADMEやdocs
+- `required`: 必ず存在してほしい環境変数
+- `optional`: 使ってよいが必須ではない環境変数
+- `ignore`: チェック対象から外す環境変数
+- `docs`: 説明を探す README や docs のパス
 
-## Why
-
-セットアップが失敗する理由の多くは、意外と単純です。コードには環境変数を追加したのに `.env.example` は更新していない。README の環境変数表が古い。サンプルファイルにトークンのような値が混ざっている。`configenvy` は、こうした小さなズレを見える状態に保ちます。
+セットアップ失敗の多くは、そこまで謎ではありません。コードに変数を追加したのに `.env.example` に書き忘れた。README の表が古くなった。サンプルにトークンっぽい値が入った。`configenvy` は、その小さな契約を崩れにくくします。
 
 ## Limitations
 
-v0.1 の `configenvy` は、軽量な静的抽出を使っています。すべての言語やフレームワークを完全に解析するわけではなく、`process.env[prefix + "_TOKEN"]` のような動的な変数名は検出できない場合があります。まずは、セットアップを壊しやすい典型的なズレを見つけるためのツールです。完全な secret scanner や型情報つきの compiler plugin を置き換えるものではありません。
+v0.1 の `configenvy` は軽量な静的抽出を使っています。すべての言語やフレームワークを完全に解析するわけではなく、`process.env[prefix + "_TOKEN"]` のような動的な名前は見逃すことがあります。目的は、よくあるセットアップ破綻を早めに見つけることです。完全な secrets scanner や型対応の compiler plugin を置き換えるものではありません。
 
 ## Roadmap
 
-- PRに診断結果をコメントする GitHub Action
+- PRコメント用の GitHub Action
 - code scanning ツール向けの SARIF 出力
 - Next.js、Vite、Remix、Docker中心のプロジェクト向けプリセット
-- false positive と検出漏れを減らすための、より深いAST解析
-- env docsを編集しながら確認できる VS Code 拡張
+- false positive や見逃しを減らす、より深い AST 解析
+- env docs を編集しながら確認できる VS Code 拡張
 
 ## Privacy and safety
 
 `configenvy` は、デフォルトで `.env` と example ではない `.env.*` ファイルを読みません。ローカルで実行され、ファイルをアップロードしたり外部APIを呼び出したりしません。
-
-## License
-
-MIT
