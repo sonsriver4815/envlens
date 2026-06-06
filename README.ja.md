@@ -41,27 +41,55 @@ WARN undocumented STRIPE_WEBHOOK_SECRET
 
 ## Install
 
-公開済みの最新版CLIを npx で実行できます。
+先にインストールしなくても使えます。プロジェクトのフォルダに移動して、これを実行します。
 
-```bash
-npx configenvy@latest doctor
+```powershell
+cd "C:\path\to\your-project"
+npx configenvy@latest doctor .
 ```
 
-プロジェクトにインストールして使うこともできます。
+問題がなければ、こう表示されます。
 
-```bash
-npm install -D configenvy
-npx configenvy@latest doctor
+```text
+PASS configenvy found no environment variable issues.
 ```
 
 ## Quick Start
 
-```bash
-npm install
-npm run build
-node packages/cli/dist/index.js doctor examples/broken
-node packages/cli/dist/index.js table examples/nextjs
-node packages/cli/dist/index.js explain DATABASE_URL examples/nextjs
+`configenvy` は、環境変数が `.env.example` に書かれているか、README や docs に説明があるかを確認します。
+
+今いるフォルダをチェック:
+
+```powershell
+npx configenvy@latest doctor .
+```
+
+README に貼る表を表示:
+
+```powershell
+npx configenvy@latest table .
+```
+
+表をファイルに保存:
+
+```powershell
+npx configenvy@latest table . --out README.env.md
+```
+
+1つの環境変数だけ調べる:
+
+```powershell
+npx configenvy@latest explain DATABASE_URL .
+```
+
+PowerShell の注意:
+
+- `.` は「今いるフォルダ」です。
+- スペース入りのパスは `"..."` で囲みます。
+- パスを `[]` で囲む必要はありません。
+
+```powershell
+npx configenvy@latest table "C:\path\to\your-project"
 ```
 
 ## CLI

@@ -41,27 +41,55 @@ WARN undocumented STRIPE_WEBHOOK_SECRET
 
 ## Install
 
-Run the latest published CLI with npx:
+You do not need to install anything first. Move to your project folder and run:
 
-```bash
-npx configenvy@latest doctor
+```powershell
+cd "C:\path\to\your-project"
+npx configenvy@latest doctor .
 ```
 
-Or install it in a project:
+If everything is OK, you will see:
 
-```bash
-npm install -D configenvy
-npx configenvy@latest doctor
+```text
+PASS configenvy found no environment variable issues.
 ```
 
 ## Quick Start
 
-```bash
-npm install
-npm run build
-node packages/cli/dist/index.js doctor examples/broken
-node packages/cli/dist/index.js table examples/nextjs
-node packages/cli/dist/index.js explain DATABASE_URL examples/nextjs
+`configenvy` checks whether your environment variables are listed in `.env.example` and documented where contributors expect them.
+
+Check the current folder:
+
+```powershell
+npx configenvy@latest doctor .
+```
+
+Generate a Markdown table for your README:
+
+```powershell
+npx configenvy@latest table .
+```
+
+Save that table to a file:
+
+```powershell
+npx configenvy@latest table . --out README.env.md
+```
+
+Explain one variable:
+
+```powershell
+npx configenvy@latest explain DATABASE_URL .
+```
+
+PowerShell tips:
+
+- `.` means the current folder.
+- Wrap paths with spaces in quotes.
+- Do not wrap paths in `[]`.
+
+```powershell
+npx configenvy@latest table "C:\path\to\your-project"
 ```
 
 ## CLI
