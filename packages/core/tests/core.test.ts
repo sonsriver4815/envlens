@@ -65,7 +65,7 @@ describe("configenvy core", () => {
         "",
         "# Not attached after the blank line",
         "",
-        "LOG_LEVEL= # Logging verbosity",
+        "LOG_LEVEL= # Used for foo | bar",
         "CALLBACK_URL=https://example.test/path#anchor",
         "QUOTED_HASH=\"value # not a comment\""
       ].join("\n"),
@@ -81,18 +81,18 @@ describe("configenvy core", () => {
     }));
     expect(result.references).toContainEqual(expect.objectContaining({
       name: "LOG_LEVEL",
-      description: "Logging verbosity"
+      description: "Used for foo | bar"
     }));
     expect(result.references.find((reference) => reference.name === "CALLBACK_URL")?.value).toBe(
       "https://example.test/path#anchor"
     );
     expect(result.references.find((reference) => reference.name === "QUOTED_HASH")?.value).toBe("value # not a comment");
-    expect(result.references.find((reference) => reference.name === "LOG_LEVEL")?.description).toBe("Logging verbosity");
+    expect(result.references.find((reference) => reference.name === "LOG_LEVEL")?.description).toBe("Used for foo | bar");
     expect(result.references.find((reference) => reference.name === "CALLBACK_URL")?.description).toBeUndefined();
     expect(table).toContain(
       "| DATABASE_URL | yes | no | yes | no | Postgres connection string used by the app server | unused-example |"
     );
-    expect(table).toContain("| LOG_LEVEL | yes | no | yes | no | Logging verbosity | unused-example |");
+    expect(table).toContain("| LOG_LEVEL | yes | no | yes | no | Used for foo \\| bar | unused-example |");
   });
 
   it("skips generated js when a ts sibling exists", async () => {

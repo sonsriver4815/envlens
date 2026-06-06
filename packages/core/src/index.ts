@@ -114,7 +114,7 @@ export function buildMarkdownTable(result: ScanResult): string {
       .map((diagnostic) => diagnostic.code)
       .join(", ");
 
-    return `| ${variable} | ${inExample} | ${inCode} | ${inDocs} | ${inCi} | ${description ?? "-"} | ${issues || "-"} |`;
+    return `| ${markdownTableCell(variable)} | ${inExample} | ${inCode} | ${inDocs} | ${inCi} | ${markdownTableCell(description ?? "-")} | ${markdownTableCell(issues || "-")} |`;
   });
 
   return [
@@ -143,6 +143,10 @@ export function explainVariable(result: ScanResult, variable: string): string {
   }
 
   return lines.join("\n");
+}
+
+function markdownTableCell(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/\|/g, "\\|").replace(/\r?\n/g, " ");
 }
 
 export function toJson(result: ScanResult): string {
