@@ -77,6 +77,14 @@ export function createProgram(dependencies: CliDependencies = defaultDependencie
     });
 
   program
+    .command("init")
+    .argument("[path]", "project directory", ".")
+    .description("create a starter configenvy.config.json file")
+    .action(async (projectPath: string) => {
+      await runInit(projectPath, dependencies);
+    });
+
+  program
     .command("explain")
     .argument("<variable>", "environment variable name")
     .argument("[path]", "project directory", ".")
@@ -87,6 +95,13 @@ export function createProgram(dependencies: CliDependencies = defaultDependencie
 
   return program;
 }
+
+const starterConfig = {
+  required: [],
+  optional: [],
+  ignore: ["NODE_ENV"],
+  docs: ["README.md", "docs"]
+};
 
 export async function runCli(argv: string[], dependencies: CliDependencies = defaultDependencies): Promise<void> {
   const program = createProgram(dependencies);
@@ -113,6 +128,28 @@ export async function runDoctor(
   const hasWarning = result.diagnostics.some((diagnostic) => diagnostic.severity === "warning");
   if (hasError || (options.ci && hasWarning)) dependencies.exit(2);
   if (hasWarning) dependencies.exit(1);
+}
+
+export async function runInit(
+  projectPath: string,
+  dependencies: CliDependencies = defaultDependencies
+): Promise<void> {
+  const rootDir = dependencies.resolvePath(projectPath);
+  const configPath = dependencies.resolvePath(rootDir, "configenvy.config.json");
+  const content = `${JSON.stringify(starterConfig, null, 2)}\n`;
+
+  try {
+    await dependencies.writeFile(configPath, content, { encoding: "utf8", flag: "wx" });
+  } catch (error) {
+    if (isNodeError(error) && error.code === "EEXIST") {
+      dependencies.error("configenvy.config.json already exists.");
+      dependencies.exit(1);
+      return;
+    }
+    throw error;
+  }
+
+  dependencies.log(`Created ${configPath}`);
 }
 
 export function resolveOutputPath(
@@ -145,6 +182,10 @@ export function printHumanReport(
   const errors = diagnostics.filter((diagnostic) => diagnostic.severity === "error").length;
   const warnings = diagnostics.length - errors;
   log(`Summary: ${errors} error(s), ${warnings} warning(s).`);
+}
+
+function isNodeError(error: unknown): error is NodeJS.ErrnoException {
+  return error instanceof Error && "code" in error;
 }
 
 const invokedPath = process.argv[1];

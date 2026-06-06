@@ -146,6 +146,37 @@ describe("configenvy cli", () => {
     ]);
   });
 
+  it("creates a starter config file with init", async () => {
+    const outcome = await invokeCli(["init", "examples/nextjs"]);
+
+    expect(outcome.exitCode).toBeNull();
+    expect(outcome.logs).toEqual([`Created ${resolve("examples/nextjs", "configenvy.config.json")}`]);
+    expect(outcome.writes).toEqual([
+      {
+        path: resolve("examples/nextjs", "configenvy.config.json"),
+        content: `${JSON.stringify({
+          required: [],
+          optional: [],
+          ignore: ["NODE_ENV"],
+          docs: ["README.md", "docs"]
+        }, null, 2)}\n`
+      }
+    ]);
+  });
+
+  it("does not overwrite an existing config file with init", async () => {
+    const outcome = await invokeCli(["init", "examples/nextjs"], {
+      writeFile: async () => {
+        const error = new Error("file exists") as NodeJS.ErrnoException;
+        error.code = "EEXIST";
+        throw error;
+      }
+    });
+
+    expect(outcome.exitCode).toBe(1);
+    expect(outcome.errors).toEqual(["configenvy.config.json already exists."]);
+  });
+
   it("preserves absolute paths for table --out", () => {
     const outputPath = resolve("C:\\tmp", "README.env.md");
     expect(resolveOutputPath(resolve("examples/nextjs"), outputPath)).toBe(outputPath);

@@ -70,6 +70,12 @@ Check the current folder:
 npx configenvy@latest doctor .
 ```
 
+Create a starter config file:
+
+```powershell
+npx configenvy@latest init .
+```
+
 Generate a Markdown table:
 
 ```powershell
@@ -105,6 +111,7 @@ configenvy doctor [path]
 configenvy doctor --format json [path]
 configenvy doctor --strict [path]
 configenvy check --ci [path]
+configenvy init [path]
 configenvy table [path] --out README.env.md
 configenvy explain DATABASE_URL [path]
 ```

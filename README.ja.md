@@ -70,6 +70,12 @@ npx configenvy doctor .
 npx configenvy@latest doctor .
 ```
 
+設定ファイルのひな形を作成:
+
+```powershell
+npx configenvy@latest init .
+```
+
 README に貼る表を表示:
 
 ```powershell
@@ -105,6 +111,7 @@ configenvy doctor [path]
 configenvy doctor --format json [path]
 configenvy doctor --strict [path]
 configenvy check --ci [path]
+configenvy init [path]
 configenvy table [path] --out README.env.md
 configenvy explain DATABASE_URL [path]
 ```
