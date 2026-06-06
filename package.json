@@ -4,6 +4,11 @@
   "version": "0.1.1",
   "description": "Find missing, unused, undocumented, and risky environment variables before your users hit setup errors.",
   "type": "module",
+  "packageManager": "npm@11.12.1",
+  "engines": {
+    "node": ">=18",
+    "npm": ">=9"
+  },
   "workspaces": [
     "packages/core",
     "packages/cli"
@@ -12,7 +17,8 @@
     "build": "npm run build -w @configenvy/core && npm run build -w configenvy",
     "test": "vitest run",
     "lint": "tsc -b --pretty false",
-    "check": "npm run lint && npm test && npm run build"
+    "check": "npm run lint && npm test && npm run build",
+    "pack:check": "npm pack --dry-run --json -w @configenvy/core && npm pack --dry-run --json -w configenvy"
   },
   "keywords": [
     "env",

@@ -3,6 +3,9 @@
   "version": "0.1.1",
   "description": "Find missing, unused, undocumented, and risky environment variables before setup breaks.",
   "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sonsriver4815/configenvy.git",
