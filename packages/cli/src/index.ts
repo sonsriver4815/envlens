@@ -41,7 +41,7 @@ export function createProgram(dependencies: CliDependencies = defaultDependencie
   program
     .name("configenvy")
     .description("Find missing, unused, undocumented, and risky environment variables.")
-    .version("0.1.1");
+    .version("0.1.2");
 
   program
     .command("doctor")
