@@ -132,7 +132,7 @@ configenvy explain DATABASE_URL [path]
 
 ## Configuration
 
-デフォルト設定を変えたい場合は、プロジェクトルートに `configenvy.config.json` を置きます。
+設定なしでも使えます。必須の環境変数や無視したい変数を指定したい場合は、プロジェクトルートに `configenvy.config.json` を置きます。
 
 ```json
 {
@@ -142,6 +142,11 @@ configenvy explain DATABASE_URL [path]
   "docs": ["README.md", "docs"]
 }
 ```
+
+- `required`: 必ず必要な環境変数
+- `optional`: 任意の環境変数
+- `ignore`: チェックしない環境変数
+- `docs`: 説明を探すREADMEやdocs
 
 ## Why
 

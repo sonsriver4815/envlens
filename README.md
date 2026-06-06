@@ -132,7 +132,7 @@ configenvy explain DATABASE_URL [path]
 
 ## Configuration
 
-Add `configenvy.config.json` to your project root when you want to tune the defaults:
+configenvy works without a config file. Add `configenvy.config.json` to your project root when you want to mark variables as required or ignore noisy ones.
 
 ```json
 {
@@ -142,6 +142,11 @@ Add `configenvy.config.json` to your project root when you want to tune the defa
   "docs": ["README.md", "docs"]
 }
 ```
+
+- `required`: environment variables that must exist
+- `optional`: environment variables that are allowed but not required
+- `ignore`: environment variables to skip
+- `docs`: README or docs paths where descriptions should be checked
 
 ## Why
 
