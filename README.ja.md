@@ -144,6 +144,8 @@ configenvy explain DATABASE_URL [path]
 | 2 | error あり、または `check --ci` が失敗 |
 | 3 | 実行時エラーまたは設定エラー |
 
+`configenvy check --ci` は、通常のテキスト出力では warning と error を GitHub Actions annotation としても出力します。
+
 ## Config
 
 設定ファイルなしでも使えます。必須変数を明示したい場合や、ノイズになる変数を無視したい場合は、プロジェクトルートに `configenvy.config.json` を置きます。

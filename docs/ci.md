@@ -15,3 +15,5 @@ jobs:
           node-version: 22
       - run: npx configenvy check --ci
 ```
+
+With the default text output, `check --ci` also emits GitHub Actions annotations for warnings and errors.

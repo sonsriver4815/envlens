@@ -122,6 +122,9 @@ export async function runDoctor(
     dependencies.log(dependencies.toJson(result));
   } else {
     printHumanReport(result.diagnostics, dependencies.log);
+    if (options.ci) {
+      printGitHubAnnotations(result.diagnostics, dependencies.log);
+    }
   }
 
   const hasError = result.diagnostics.some((diagnostic) => diagnostic.severity === "error");
@@ -182,6 +185,29 @@ export function printHumanReport(
   const errors = diagnostics.filter((diagnostic) => diagnostic.severity === "error").length;
   const warnings = diagnostics.length - errors;
   log(`Summary: ${errors} error(s), ${warnings} warning(s).`);
+}
+
+export function printGitHubAnnotations(
+  diagnostics: Diagnostic[],
+  log: (...values: unknown[]) => void = defaultDependencies.log
+): void {
+  for (const diagnostic of diagnostics) {
+    const command = diagnostic.severity === "error" ? "error" : "warning";
+    const properties = [
+      diagnostic.files[0] ? `file=${escapeAnnotationProperty(diagnostic.files[0])}` : undefined,
+      `title=${escapeAnnotationProperty(`${diagnostic.code} ${diagnostic.variable}`)}`
+    ].filter(Boolean);
+
+    log(`::${command} ${properties.join(",")}::${escapeAnnotationMessage(diagnostic.message)}`);
+  }
+}
+
+function escapeAnnotationProperty(value: string): string {
+  return escapeAnnotationMessage(value).replace(/:/g, "%3A").replace(/,/g, "%2C");
+}
+
+function escapeAnnotationMessage(value: string): string {
+  return value.replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
 }
 
 function isNodeError(error: unknown): error is NodeJS.ErrnoException {

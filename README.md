@@ -144,6 +144,8 @@ configenvy explain DATABASE_URL [path]
 | 2 | Errors found, or `check --ci` failed |
 | 3 | Runtime or config error |
 
+`configenvy check --ci` also emits GitHub Actions annotations for warnings and errors when using the default text output.
+
 ## Config
 
 configenvy works without a config file. Add `configenvy.config.json` to your project root when you want to mark variables as required or ignore noisy ones.

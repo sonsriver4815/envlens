@@ -128,7 +128,56 @@ describe("configenvy cli", () => {
 
     expect(outcome.exitCode).toBe(2);
     expect(outcome.logs).toContain("WARN undocumented DATABASE_URL");
+    expect(outcome.logs).toContain(
+      "::warning file=README.md,title=undocumented DATABASE_URL::DATABASE_URL is not mentioned in README or docs."
+    );
     expect(scanCalls).toEqual([{ rootDir: resolve("examples/broken"), strict: true }]);
+  });
+
+  it("escapes GitHub Actions annotations for check --ci", async () => {
+    const outcome = await invokeCli(["check", "--ci", "examples/broken"], {
+      scanProject: async (options) => ({
+        diagnostics: [
+          {
+            code: "missing-example",
+            files: ["src/app,server.ts"],
+            message: "DATABASE_URL includes 100% of bad\nnews",
+            severity: "error",
+            variable: "DATABASE_URL"
+          }
+        ],
+        references: [],
+        rootDir: options.rootDir,
+        variables: ["DATABASE_URL"]
+      })
+    });
+
+    expect(outcome.exitCode).toBe(2);
+    expect(outcome.logs).toContain(
+      "::error file=src/app%2Cserver.ts,title=missing-example DATABASE_URL::DATABASE_URL includes 100%25 of bad%0Anews"
+    );
+  });
+
+  it("keeps json output clean for check --ci --format json", async () => {
+    const outcome = await invokeCli(["check", "--ci", "--format", "json", "examples/broken"], {
+      scanProject: async (options) => ({
+        diagnostics: [
+          {
+            code: "undocumented",
+            files: ["README.md"],
+            message: "DATABASE_URL is not mentioned in README or docs.",
+            severity: "warning",
+            variable: "DATABASE_URL"
+          }
+        ],
+        references: [],
+        rootDir: options.rootDir,
+        variables: ["DATABASE_URL"]
+      })
+    });
+
+    expect(outcome.exitCode).toBe(2);
+    expect(outcome.logs).toEqual(["{\"ok\":true}"]);
   });
 
   it("writes markdown output for table --out", async () => {
