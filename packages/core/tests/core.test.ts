@@ -110,6 +110,32 @@ describe("configenvy core", () => {
     expect(codeReferences[0]?.file).toBe("src/index.ts");
   });
 
+  it("skips generated and cache directories", async () => {
+    const root = await fixture({
+      "src/index.ts": "console.log(process.env.DATABASE_URL)",
+      "build/index.js": "console.log(process.env.BUILD_ONLY_SECRET)",
+      "coverage/report.js": "console.log(process.env.COVERAGE_ONLY_SECRET)",
+      ".next/server/app.js": "console.log(process.env.NEXT_ONLY_SECRET)",
+      ".turbo/cache.js": "console.log(process.env.TURBO_ONLY_SECRET)",
+      ".vercel/output/config.js": "console.log(process.env.VERCEL_ONLY_SECRET)",
+      ".cache/output.js": "console.log(process.env.CACHE_ONLY_SECRET)",
+      "out/index.js": "console.log(process.env.OUT_ONLY_SECRET)",
+      ".env.example": "DATABASE_URL=postgres://user:pass@localhost:5432/app\n",
+      "README.md": "DATABASE_URL is required."
+    });
+
+    const result = await scanProject({ rootDir: root });
+
+    expect(result.variables).toContain("DATABASE_URL");
+    expect(result.variables).not.toContain("BUILD_ONLY_SECRET");
+    expect(result.variables).not.toContain("COVERAGE_ONLY_SECRET");
+    expect(result.variables).not.toContain("NEXT_ONLY_SECRET");
+    expect(result.variables).not.toContain("TURBO_ONLY_SECRET");
+    expect(result.variables).not.toContain("VERCEL_ONLY_SECRET");
+    expect(result.variables).not.toContain("CACHE_ONLY_SECRET");
+    expect(result.variables).not.toContain("OUT_ONLY_SECRET");
+  });
+
   it("does not treat common documentation acronyms as variables", async () => {
     const root = await fixture({
       ".env.example": "APP_URL=http://localhost:3000\n",

@@ -122,6 +122,7 @@ configenvy explain DATABASE_URL [path]
 - ソースコード: `src/**/*.{js,jsx,ts,tsx,mjs,cjs}`
 - ドキュメント: `README.md` と設定された docs パス
 - CI と実行設定: `.github/workflows/*.yml`、Docker Compose、`vercel.json`
+- `node_modules`、`dist`、`build`、`coverage`、`.next`、`.turbo`、`.vercel`、`.cache`、`out` などの生成物・キャッシュ用ディレクトリはデフォルトでスキップします。
 
 ## Supported patterns
 

@@ -122,6 +122,7 @@ configenvy explain DATABASE_URL [path]
 - Source code: `src/**/*.{js,jsx,ts,tsx,mjs,cjs}`
 - Documentation: `README.md` and configured docs paths
 - CI and runtime config: `.github/workflows/*.yml`, Docker Compose files, `vercel.json`
+- Generated and cache directories such as `node_modules`, `dist`, `build`, `coverage`, `.next`, `.turbo`, `.vercel`, `.cache`, and `out` are skipped by default.
 
 ## Supported patterns
 

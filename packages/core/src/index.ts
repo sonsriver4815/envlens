@@ -55,6 +55,18 @@ export const defaultConfig: EnvlensConfig = {
 const exampleFileNames = new Set([".env.example", ".env.sample", ".env.template"]);
 const codeExtensions = new Set([".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs"]);
 const workflowExtensions = new Set([".yml", ".yaml"]);
+const skippedDirectoryNames = new Set([
+  ".cache",
+  ".git",
+  ".next",
+  ".turbo",
+  ".vercel",
+  "build",
+  "coverage",
+  "dist",
+  "node_modules",
+  "out"
+]);
 
 export async function scanProject(options: ScanOptions): Promise<ScanResult> {
   const path = await import("node:path");
@@ -387,7 +399,7 @@ async function listFiles(rootDir: string): Promise<string[]> {
   async function walk(dir: string): Promise<void> {
     const entries = await fs.readdir(dir, { withFileTypes: true });
     for (const entry of entries) {
-      if (entry.name === "node_modules" || entry.name === ".git" || entry.name === "dist") continue;
+      if (entry.isDirectory() && skippedDirectoryNames.has(entry.name)) continue;
       const fullPath = path.join(dir, entry.name);
       if (entry.isDirectory()) {
         await walk(fullPath);
