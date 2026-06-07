@@ -1,7 +1,7 @@
 {
   "name": "configenvy-repo",
   "private": true,
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Find missing, unused, undocumented, and risky environment variables before your users hit setup errors.",
   "type": "module",
   "packageManager": "npm@11.12.1",
