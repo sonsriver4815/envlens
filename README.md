@@ -109,8 +109,10 @@ npx configenvy@latest table "C:\path\to\your-project"
 ```text
 configenvy doctor [path]
 configenvy doctor --format json [path]
+configenvy doctor --format sarif [path]
 configenvy doctor --strict [path]
 configenvy check --ci [path]
+configenvy check --ci --format sarif [path]
 configenvy init [path]
 configenvy table [path] --out README.env.md
 configenvy explain DATABASE_URL [path]
@@ -144,7 +146,7 @@ configenvy explain DATABASE_URL [path]
 | 2 | Errors found, or `check --ci` failed |
 | 3 | Runtime or config error |
 
-`configenvy check --ci` also emits GitHub Actions annotations for warnings and errors when using the default text output.
+`configenvy check --ci` also emits GitHub Actions annotations for warnings and errors when using the default text output. Use `--format sarif` when you want to upload results to GitHub code scanning or another SARIF-compatible tool.
 
 ## Config
 
@@ -173,7 +175,6 @@ Most setup failures are not mysterious. A variable was added in code but not in 
 ## Roadmap
 
 - GitHub Action for PR comments
-- SARIF output for code scanning tools
 - Framework presets for Next.js, Vite, Remix, and Docker-heavy projects
 - Deeper AST parsing for fewer false positives and missed references
 - VS Code extension for local feedback while editing env docs

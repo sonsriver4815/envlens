@@ -3,10 +3,10 @@ import { writeFile } from "node:fs/promises";
 import { isAbsolute, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { Command } from "commander";
-import { buildMarkdownTable, explainVariable, scanProject, toJson, type Diagnostic } from "@configenvy/core";
+import { buildMarkdownTable, explainVariable, scanProject, toJson, toSarif, type Diagnostic } from "@configenvy/core";
 
 type DoctorOptions = {
-  format?: "text" | "json";
+  format?: "text" | "json" | "sarif";
   strict?: boolean;
   ci?: boolean;
 };
@@ -20,6 +20,7 @@ export type CliDependencies = {
   resolvePath: typeof resolve;
   scanProject: typeof scanProject;
   toJson: typeof toJson;
+  toSarif: typeof toSarif;
   writeFile: typeof writeFile;
 };
 
@@ -32,6 +33,7 @@ const defaultDependencies: CliDependencies = {
   resolvePath: resolve,
   scanProject,
   toJson,
+  toSarif,
   writeFile
 };
 
@@ -46,7 +48,7 @@ export function createProgram(dependencies: CliDependencies = defaultDependencie
   program
     .command("doctor")
     .argument("[path]", "project directory", ".")
-    .option("--format <format>", "output format: text or json", "text")
+    .option("--format <format>", "output format: text, json, or sarif", "text")
     .option("--strict", "treat documentation warnings as errors")
     .action(async (projectPath: string, options: DoctorOptions) => {
       await runDoctor(projectPath, options, dependencies);
@@ -56,7 +58,7 @@ export function createProgram(dependencies: CliDependencies = defaultDependencie
     .command("check")
     .argument("[path]", "project directory", ".")
     .option("--ci", "fail on warnings and errors")
-    .option("--format <format>", "output format: text or json", "text")
+    .option("--format <format>", "output format: text, json, or sarif", "text")
     .action(async (projectPath: string, options: DoctorOptions) => {
       await runDoctor(projectPath, { ...options, strict: Boolean(options.ci), ci: Boolean(options.ci) }, dependencies);
     });
@@ -120,6 +122,8 @@ export async function runDoctor(
 
   if (options.format === "json") {
     dependencies.log(dependencies.toJson(result));
+  } else if (options.format === "sarif") {
+    dependencies.log(dependencies.toSarif(result));
   } else {
     printHumanReport(result.diagnostics, dependencies.log);
     if (options.ci) {

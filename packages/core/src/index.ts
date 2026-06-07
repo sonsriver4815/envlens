@@ -45,6 +45,43 @@ export type ScanResult = {
   variables: string[];
 };
 
+export type SarifLog = {
+  version: "2.1.0";
+  $schema: string;
+  runs: Array<{
+    tool: {
+      driver: {
+        name: "configenvy";
+        informationUri: string;
+        rules: Array<{
+          id: DiagnosticCode;
+          name: DiagnosticCode;
+          shortDescription: {
+            text: string;
+          };
+          defaultConfiguration: {
+            level: "error" | "warning";
+          };
+        }>;
+      };
+    };
+    results: Array<{
+      ruleId: DiagnosticCode;
+      level: "error" | "warning";
+      message: {
+        text: string;
+      };
+      locations?: Array<{
+        physicalLocation: {
+          artifactLocation: {
+            uri: string;
+          };
+        };
+      }>;
+    }>;
+  }>;
+};
+
 export const defaultConfig: EnvlensConfig = {
   required: [],
   optional: [],
@@ -164,6 +201,75 @@ function markdownTableCell(value: string): string {
 export function toJson(result: ScanResult): string {
   return JSON.stringify(result, null, 2);
 }
+
+export function toSarif(result: ScanResult): string {
+  const rules = [...new Set(result.diagnostics.map((diagnostic) => diagnostic.code))]
+    .sort()
+    .map((code) => ({
+      id: code,
+      name: code,
+      shortDescription: {
+        text: diagnosticRuleDescriptions[code]
+      },
+      defaultConfiguration: {
+        level: diagnosticRuleDefaultLevels[code]
+      }
+    }));
+
+  const sarif: SarifLog = {
+    version: "2.1.0",
+    $schema: "https://json.schemastore.org/sarif-2.1.0.json",
+    runs: [
+      {
+        tool: {
+          driver: {
+            name: "configenvy",
+            informationUri: "https://github.com/sonsriver4815/configenvy",
+            rules
+          }
+        },
+        results: result.diagnostics.map((diagnostic) => ({
+          ruleId: diagnostic.code,
+          level: diagnostic.severity,
+          message: {
+            text: `${diagnostic.variable}: ${diagnostic.message}`
+          },
+          ...(diagnostic.files[0]
+            ? {
+                locations: [
+                  {
+                    physicalLocation: {
+                      artifactLocation: {
+                        uri: diagnostic.files[0]
+                      }
+                    }
+                  }
+                ]
+              }
+            : {})
+        }))
+      }
+    ]
+  };
+
+  return JSON.stringify(sarif, null, 2);
+}
+
+const diagnosticRuleDescriptions: Record<DiagnosticCode, string> = {
+  "ci-missing": "A variable appears in CI or deployment config but is not described for contributors.",
+  "dangerous-default": "An example file contains a value that looks risky for contributors to copy.",
+  "missing-example": "A variable is used by code or required by config but is missing from env example files.",
+  undocumented: "A variable is not mentioned in README or docs.",
+  "unused-example": "A variable is documented in an env example but was not found in code or CI config."
+};
+
+const diagnosticRuleDefaultLevels: Record<DiagnosticCode, "error" | "warning"> = {
+  "ci-missing": "warning",
+  "dangerous-default": "error",
+  "missing-example": "error",
+  undocumented: "warning",
+  "unused-example": "warning"
+};
 
 function buildDiagnostics(references: EnvReference[], config: EnvlensConfig, strict: boolean): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];

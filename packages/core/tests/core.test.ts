@@ -2,7 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, it } from "vitest";
-import { buildMarkdownTable, explainVariable, scanProject } from "../src/index";
+import { buildMarkdownTable, explainVariable, scanProject, toSarif } from "../src/index";
 
 async function fixture(files: Record<string, string>): Promise<string> {
   const root = join(tmpdir(), `configenvy-${Date.now()}-${Math.random().toString(16).slice(2)}`);
@@ -55,6 +55,48 @@ describe("configenvy core", () => {
 
     expect(table).toContain("| VITE_PUBLIC_URL | yes | yes | yes | no | - | - |");
     expect(explanation).toContain("src/index.ts:1");
+  });
+
+  it("builds SARIF output for diagnostics", async () => {
+    const root = await fixture({
+      "src/index.ts": "console.log(process.env.DATABASE_URL)",
+      ".env.example": "APP_URL=http://localhost:3000\n",
+      "README.md": "Set APP_URL before running."
+    });
+
+    const result = await scanProject({ rootDir: root });
+    const sarif = JSON.parse(toSarif(result)) as {
+      version: string;
+      runs: Array<{
+        tool: { driver: { name: string; rules: Array<{ id: string }> } };
+        results: Array<{
+          ruleId: string;
+          level: string;
+          message: { text: string };
+          locations?: Array<{ physicalLocation: { artifactLocation: { uri: string } } }>;
+        }>;
+      }>;
+    };
+
+    expect(sarif.version).toBe("2.1.0");
+    expect(sarif.runs[0]?.tool.driver.name).toBe("configenvy");
+    expect(sarif.runs[0]?.tool.driver.rules.map((rule) => rule.id)).toContain("missing-example");
+    expect(sarif.runs[0]?.results).toContainEqual(expect.objectContaining({
+      ruleId: "missing-example",
+      level: "error",
+      message: {
+        text: "DATABASE_URL: DATABASE_URL is used by code or required by config but is missing from .env.example files."
+      },
+      locations: [
+        {
+          physicalLocation: {
+            artifactLocation: {
+              uri: "src/index.ts"
+            }
+          }
+        }
+      ]
+    }));
   });
 
   it("uses .env.example comments as variable descriptions", async () => {

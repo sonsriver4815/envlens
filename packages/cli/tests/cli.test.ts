@@ -31,6 +31,7 @@ function createDependencies(overrides: Partial<CliDependencies> = {}): CliDepend
       variables: []
     }),
     toJson: () => "{\"ok\":true}",
+    toSarif: () => "{\"version\":\"2.1.0\"}",
     writeFile: async () => {},
     ...overrides
   };
@@ -178,6 +179,29 @@ describe("configenvy cli", () => {
 
     expect(outcome.exitCode).toBe(2);
     expect(outcome.logs).toEqual(["{\"ok\":true}"]);
+  });
+
+  it("keeps SARIF output clean for check --ci --format sarif", async () => {
+    const outcome = await invokeCli(["check", "--ci", "--format", "sarif", "examples/broken"], {
+      scanProject: async (options) => ({
+        diagnostics: [
+          {
+            code: "missing-example",
+            files: ["src/index.ts"],
+            message: "DATABASE_URL is missing from .env.example files.",
+            severity: "error",
+            variable: "DATABASE_URL"
+          }
+        ],
+        references: [],
+        rootDir: options.rootDir,
+        variables: ["DATABASE_URL"]
+      }),
+      toSarif: () => "{\"version\":\"2.1.0\",\"runs\":[]}"
+    });
+
+    expect(outcome.exitCode).toBe(2);
+    expect(outcome.logs).toEqual(["{\"version\":\"2.1.0\",\"runs\":[]}"]);
   });
 
   it("writes markdown output for table --out", async () => {
