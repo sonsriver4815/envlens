@@ -178,6 +178,28 @@ describe("configenvy core", () => {
     expect(result.variables).not.toContain("OUT_ONLY_SECRET");
   });
 
+  it("skips test and fixture directories", async () => {
+    const root = await fixture({
+      "src/index.ts": "console.log(process.env.DATABASE_URL)",
+      "tests/core.test.ts": "expect(process.env.TEST_ONLY_SECRET).toBeDefined()",
+      "test/helper.ts": "console.log(process.env.TEST_HELPER_SECRET)",
+      "__tests__/app.test.ts": "console.log(process.env.JEST_ONLY_SECRET)",
+      "__mocks__/env.ts": "console.log(process.env.MOCK_ONLY_SECRET)",
+      "fixtures/app.ts": "console.log(process.env.FIXTURE_ONLY_SECRET)",
+      ".env.example": "DATABASE_URL=postgres://user:pass@localhost:5432/app\n",
+      "README.md": "DATABASE_URL is required."
+    });
+
+    const result = await scanProject({ rootDir: root });
+
+    expect(result.variables).toContain("DATABASE_URL");
+    expect(result.variables).not.toContain("TEST_ONLY_SECRET");
+    expect(result.variables).not.toContain("TEST_HELPER_SECRET");
+    expect(result.variables).not.toContain("JEST_ONLY_SECRET");
+    expect(result.variables).not.toContain("MOCK_ONLY_SECRET");
+    expect(result.variables).not.toContain("FIXTURE_ONLY_SECRET");
+  });
+
   it("does not treat common documentation acronyms as variables", async () => {
     const root = await fixture({
       ".env.example": "APP_URL=http://localhost:3000\n",

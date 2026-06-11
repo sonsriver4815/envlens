@@ -1,6 +1,6 @@
 {
   "name": "@configenvy/core",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Core scanners and diagnostics for configenvy.",
   "type": "module",
   "engines": {

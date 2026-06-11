@@ -101,8 +101,13 @@ const skippedDirectoryNames = new Set([
   "build",
   "coverage",
   "dist",
+  "fixtures",
   "node_modules",
-  "out"
+  "out",
+  "test",
+  "tests",
+  "__mocks__",
+  "__tests__"
 ]);
 
 export async function scanProject(options: ScanOptions): Promise<ScanResult> {
