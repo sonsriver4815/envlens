@@ -3,12 +3,26 @@ import { readFile, writeFile } from "node:fs/promises";
 import { isAbsolute, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { Command } from "commander";
-import { buildMarkdownTable, explainVariable, scanProject, toJson, toSarif, type Diagnostic } from "@configenvy/core";
+import {
+  buildMarkdownTable,
+  explainVariable,
+  scanProject,
+  toJson,
+  toSarif,
+  type Diagnostic,
+  type ScanResult
+} from "@configenvy/core";
 
 type DoctorOptions = {
   format?: "text" | "json" | "sarif";
   strict?: boolean;
   ci?: boolean;
+};
+
+type InitOptions = {
+  dryRun?: boolean;
+  envExample?: boolean;
+  force?: boolean;
 };
 
 export type CliDependencies = {
@@ -88,9 +102,12 @@ export function createProgram(dependencies: CliDependencies = defaultDependencie
   program
     .command("init")
     .argument("[path]", "project directory", ".")
-    .description("create a starter configenvy.config.json file")
-    .action(async (projectPath: string) => {
-      await runInit(projectPath, dependencies);
+    .description("create starter configenvy files")
+    .option("--dry-run", "print planned files instead of writing them")
+    .option("--env-example", "also create a .env.example draft from detected variables")
+    .option("--force", "overwrite generated files if they already exist")
+    .action(async (projectPath: string, options: InitOptions) => {
+      await runInit(projectPath, options, dependencies);
     });
 
   program
@@ -110,6 +127,11 @@ const starterConfig = {
   optional: [],
   ignore: ["NODE_ENV"],
   docs: ["README.md", "docs"]
+};
+
+type InitFile = {
+  content: string;
+  path: string;
 };
 
 export const tableBlockStart = "<!-- configenvy:start -->";
@@ -149,24 +171,136 @@ export async function runDoctor(
 
 export async function runInit(
   projectPath: string,
+  options: InitOptions = {},
   dependencies: CliDependencies = defaultDependencies
 ): Promise<void> {
   const rootDir = dependencies.resolvePath(projectPath);
-  const configPath = dependencies.resolvePath(rootDir, "configenvy.config.json");
-  const content = `${JSON.stringify(starterConfig, null, 2)}\n`;
+  const result = await dependencies.scanProject({ rootDir });
+  const existingEnvExample = options.envExample && options.force
+    ? await readOptionalText(dependencies.resolvePath(rootDir, ".env.example"), dependencies)
+    : undefined;
+  const files = buildInitFiles(rootDir, result, Boolean(options.envExample), dependencies.resolvePath, existingEnvExample);
 
-  try {
-    await dependencies.writeFile(configPath, content, { encoding: "utf8", flag: "wx" });
-  } catch (error) {
-    if (isNodeError(error) && error.code === "EEXIST") {
-      dependencies.error("configenvy.config.json already exists.");
+  if (options.dryRun) {
+    for (const file of files) {
+      dependencies.log(`Would write ${file.path}`);
+      dependencies.log(file.content.trimEnd());
+    }
+    return;
+  }
+
+  if (!options.force && !(await ensureInitTargetsDoNotExist(files, dependencies))) {
+    return;
+  }
+
+  const flag = options.force ? "w" : "wx";
+  for (const file of files) {
+    try {
+      await dependencies.writeFile(file.path, file.content, { encoding: "utf8", flag });
+    } catch (error) {
+      if (isNodeError(error) && error.code === "EEXIST") {
+        dependencies.error(`${file.path} already exists. Re-run with --force to overwrite.`);
+        dependencies.exit(1);
+        return;
+      }
+      throw error;
+    }
+
+    dependencies.log(`Created ${file.path}`);
+  }
+}
+
+export function buildInitFiles(
+  rootDir: string,
+  result: ScanResult,
+  includeEnvExample: boolean,
+  resolvePath: typeof resolve = resolve,
+  existingEnvExample?: string
+): InitFile[] {
+  const required = detectedRuntimeVariables(result);
+  const config = {
+    ...starterConfig,
+    required
+  };
+  const files: InitFile[] = [
+    {
+      path: resolvePath(rootDir, "configenvy.config.json"),
+      content: `${JSON.stringify(config, null, 2)}\n`
+    }
+  ];
+
+  if (includeEnvExample) {
+    files.push({
+      path: resolvePath(rootDir, ".env.example"),
+      content: buildEnvExampleDraft(result, existingEnvExample)
+    });
+  }
+
+  return files;
+}
+
+async function ensureInitTargetsDoNotExist(files: InitFile[], dependencies: CliDependencies): Promise<boolean> {
+  for (const file of files) {
+    const existing = await readOptionalText(file.path, dependencies);
+    if (existing !== undefined) {
+      dependencies.error(`${file.path} already exists. Re-run with --force to overwrite.`);
       dependencies.exit(1);
-      return;
+      return false;
+    }
+  }
+  return true;
+}
+
+async function readOptionalText(path: string, dependencies: CliDependencies): Promise<string | undefined> {
+  try {
+    return String(await dependencies.readFile(path, "utf8"));
+  } catch (error) {
+    if (isNodeError(error) && error.code === "ENOENT") {
+      return undefined;
     }
     throw error;
   }
+}
 
-  dependencies.log(`Created ${configPath}`);
+function detectedRuntimeVariables(result: ScanResult): string[] {
+  const runtimeKinds = new Set(["code", "ci", "config"]);
+  return [...new Set(result.references.filter((reference) => runtimeKinds.has(reference.kind)).map((reference) => reference.name))].sort();
+}
+
+function buildEnvExampleDraft(result: ScanResult, existingContent?: string): string {
+  const runtimeVars = detectedRuntimeVariables(result);
+  if (existingContent !== undefined) {
+    const existingVars = extractEnvExampleNames(existingContent);
+    const missingVars = runtimeVars.filter((variable) => !existingVars.has(variable));
+    if (missingVars.length === 0) {
+      return existingContent.endsWith("\n") ? existingContent : `${existingContent}\n`;
+    }
+
+    return [
+      existingContent.trimEnd(),
+      "# Added by configenvy init",
+      ...missingVars.map((variable) => `${variable}=`)
+    ].filter(Boolean).join("\n") + "\n";
+  }
+
+  const lines = ["# Generated by configenvy init"];
+
+  for (const variable of runtimeVars) {
+    lines.push(`${variable}=`);
+  }
+
+  return `${lines.join("\n")}\n`;
+}
+
+function extractEnvExampleNames(content: string): Set<string> {
+  const names = new Set<string>();
+  for (const line of content.split(/\r?\n/)) {
+    const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=/);
+    if (match?.[1]) {
+      names.add(match[1]);
+    }
+  }
+  return names;
 }
 
 export async function runTableUpdate(

@@ -125,11 +125,15 @@ configenvy doctor --strict [path]
 configenvy check --ci [path]
 configenvy check --ci --format sarif [path]
 configenvy init [path]
+configenvy init [path] --env-example
+configenvy init [path] --dry-run
 configenvy table [path] --out README.env.md
 configenvy table [path] --update README.md
 configenvy table [path] --update README.md --dry-run
 configenvy explain DATABASE_URL [path]
 ```
+
+`init` creates `configenvy.config.json` without overwriting existing files. Add `--env-example` to draft missing variables into `.env.example`, `--dry-run` to preview writes, or `--force` to overwrite generated files.
 
 ## What configenvy checks
 
