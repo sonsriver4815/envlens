@@ -29,7 +29,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format esm --dts --clean"
+    "build": "tsc -b tsconfig.json --clean && tsup src/index.ts src/reporters.ts src/types.ts --format esm --clean && tsc -p tsconfig.json --emitDeclarationOnly"
   },
   "keywords": [
     "env",
