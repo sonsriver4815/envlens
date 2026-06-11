@@ -88,6 +88,17 @@ Save that table to a file:
 npx configenvy@latest table . --out README.env.md
 ```
 
+Update a marked table block in README:
+
+```md
+<!-- configenvy:start -->
+<!-- configenvy:end -->
+```
+
+```powershell
+npx configenvy@latest table . --update README.md
+```
+
 Explain one variable:
 
 ```powershell
@@ -115,6 +126,8 @@ configenvy check --ci [path]
 configenvy check --ci --format sarif [path]
 configenvy init [path]
 configenvy table [path] --out README.env.md
+configenvy table [path] --update README.md
+configenvy table [path] --update README.md --dry-run
 configenvy explain DATABASE_URL [path]
 ```
 

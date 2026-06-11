@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { resolveOutputPath, runCli, type CliDependencies } from "../src/index";
+import { resolveOutputPath, runCli, updateMarkdownTableBlock, type CliDependencies } from "../src/index";
 
 class ExitSignal extends Error {
   constructor(readonly code: number) {
@@ -23,6 +23,7 @@ function createDependencies(overrides: Partial<CliDependencies> = {}): CliDepend
     },
     explainVariable: () => "DATABASE_URL\n- code: src/index.ts:1",
     log: () => {},
+    readFile: async () => "",
     resolvePath: resolve,
     scanProject: async () => ({
       diagnostics: [],
@@ -40,6 +41,7 @@ function createDependencies(overrides: Partial<CliDependencies> = {}): CliDepend
 async function invokeCli(argv: string[], overrides: Partial<CliDependencies> = {}) {
   const logs: string[] = [];
   const errors: string[] = [];
+  const reads: string[] = [];
   const writes: Array<{ path: string; content: string }> = [];
   const scanCalls: Array<{ rootDir: string; strict?: boolean }> = [];
 
@@ -59,6 +61,17 @@ async function invokeCli(argv: string[], overrides: Partial<CliDependencies> = {
         variables: []
       };
     },
+    readFile: async (path) => {
+      reads.push(String(path));
+      return [
+        "# README",
+        "",
+        "<!-- configenvy:start -->",
+        "old table",
+        "<!-- configenvy:end -->",
+        ""
+      ].join("\n");
+    },
     writeFile: async (path, content) => {
       writes.push({ path: String(path), content: String(content) });
     },
@@ -76,7 +89,7 @@ async function invokeCli(argv: string[], overrides: Partial<CliDependencies> = {
     }
   }
 
-  return { errors, exitCode, logs, scanCalls, writes };
+  return { errors, exitCode, logs, reads, scanCalls, writes };
 }
 
 describe("configenvy cli", () => {
@@ -215,6 +228,82 @@ describe("configenvy cli", () => {
       {
         path: resolve("examples/nextjs", "README.env.md"),
         content: "| Variable | .env example | Code | Docs | CI/config | Issues |\n| DATABASE_URL | yes | yes | yes | no | - |\n"
+      }
+    ]);
+  });
+
+  it("updates a marked markdown table block", () => {
+    const updated = updateMarkdownTableBlock(
+      [
+        "# README",
+        "",
+        "<!-- configenvy:start -->",
+        "old table",
+        "<!-- configenvy:end -->",
+        "",
+        "Keep me."
+      ].join("\n"),
+      "| Variable |",
+      false
+    );
+
+    expect(updated).toBe([
+      "# README",
+      "",
+      "<!-- configenvy:start -->",
+      "| Variable |",
+      "<!-- configenvy:end -->",
+      "",
+      "Keep me."
+    ].join("\n"));
+  });
+
+  it("refuses to update markdown without markers unless forced", () => {
+    expect(() => updateMarkdownTableBlock("# README\n", "| Variable |", false)).toThrow(
+      "No configenvy table block found"
+    );
+  });
+
+  it("prints updated markdown without writing for table --update --dry-run", async () => {
+    const outcome = await invokeCli(["table", "examples/nextjs", "--update", "README.md", "--dry-run"], {
+      buildMarkdownTable: () => "| Variable |\n| --- |\n| DATABASE_URL |"
+    });
+
+    expect(outcome.exitCode).toBeNull();
+    expect(outcome.reads).toEqual([resolve("examples/nextjs", "README.md")]);
+    expect(outcome.writes).toEqual([]);
+    expect(outcome.logs).toEqual([
+      [
+        "# README",
+        "",
+        "<!-- configenvy:start -->",
+        "| Variable |",
+        "| --- |",
+        "| DATABASE_URL |",
+        "<!-- configenvy:end -->",
+        ""
+      ].join("\n")
+    ]);
+  });
+
+  it("appends a marked markdown table block with table --update --force", async () => {
+    const outcome = await invokeCli(["table", "examples/nextjs", "--update", "README.md", "--force"], {
+      buildMarkdownTable: () => "| Variable |",
+      readFile: async () => "# README\n"
+    });
+
+    expect(outcome.exitCode).toBeNull();
+    expect(outcome.writes).toEqual([
+      {
+        path: resolve("examples/nextjs", "README.md"),
+        content: [
+          "# README",
+          "",
+          "<!-- configenvy:start -->",
+          "| Variable |",
+          "<!-- configenvy:end -->",
+          ""
+        ].join("\n")
       }
     ]);
   });

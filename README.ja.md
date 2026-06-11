@@ -88,6 +88,17 @@ npx configenvy@latest table .
 npx configenvy@latest table . --out README.env.md
 ```
 
+README 内の marker ブロックを更新:
+
+```md
+<!-- configenvy:start -->
+<!-- configenvy:end -->
+```
+
+```powershell
+npx configenvy@latest table . --update README.md
+```
+
 1つの環境変数について説明:
 
 ```powershell
@@ -115,6 +126,8 @@ configenvy check --ci [path]
 configenvy check --ci --format sarif [path]
 configenvy init [path]
 configenvy table [path] --out README.env.md
+configenvy table [path] --update README.md
+configenvy table [path] --update README.md --dry-run
 configenvy explain DATABASE_URL [path]
 ```
 

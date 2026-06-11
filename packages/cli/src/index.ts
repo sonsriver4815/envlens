@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { isAbsolute, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { Command } from "commander";
@@ -17,6 +17,7 @@ export type CliDependencies = {
   exit: (code: number) => never | void;
   explainVariable: typeof explainVariable;
   log: (...values: unknown[]) => void;
+  readFile: typeof readFile;
   resolvePath: typeof resolve;
   scanProject: typeof scanProject;
   toJson: typeof toJson;
@@ -30,6 +31,7 @@ const defaultDependencies: CliDependencies = {
   exit: process.exit,
   explainVariable,
   log: console.log,
+  readFile,
   resolvePath: resolve,
   scanProject,
   toJson,
@@ -67,11 +69,16 @@ export function createProgram(dependencies: CliDependencies = defaultDependencie
     .command("table")
     .argument("[path]", "project directory", ".")
     .option("--out <file>", "write markdown table to a file")
-    .action(async (projectPath: string, options: { out?: string }) => {
+    .option("--update <file>", "replace a marked configenvy table block in a markdown file")
+    .option("--force", "append a configenvy table block when --update target has no marked block")
+    .option("--dry-run", "print the updated markdown instead of writing it")
+    .action(async (projectPath: string, options: { dryRun?: boolean; force?: boolean; out?: string; update?: string }) => {
       const rootDir = dependencies.resolvePath(projectPath);
       const result = await dependencies.scanProject({ rootDir });
       const table = dependencies.buildMarkdownTable(result);
-      if (options.out) {
+      if (options.update) {
+        await runTableUpdate(rootDir, table, { ...options, update: options.update }, dependencies);
+      } else if (options.out) {
         await dependencies.writeFile(resolveOutputPath(rootDir, options.out, dependencies.resolvePath), `${table}\n`, "utf8");
       } else {
         dependencies.log(table);
@@ -104,6 +111,9 @@ const starterConfig = {
   ignore: ["NODE_ENV"],
   docs: ["README.md", "docs"]
 };
+
+export const tableBlockStart = "<!-- configenvy:start -->";
+export const tableBlockEnd = "<!-- configenvy:end -->";
 
 export async function runCli(argv: string[], dependencies: CliDependencies = defaultDependencies): Promise<void> {
   const program = createProgram(dependencies);
@@ -159,6 +169,40 @@ export async function runInit(
   dependencies.log(`Created ${configPath}`);
 }
 
+export async function runTableUpdate(
+  rootDir: string,
+  table: string,
+  options: { dryRun?: boolean; force?: boolean; update: string },
+  dependencies: CliDependencies = defaultDependencies
+): Promise<void> {
+  const targetPath = resolveOutputPath(rootDir, options.update, dependencies.resolvePath);
+  const current = await dependencies.readFile(targetPath, "utf8");
+  const updated = updateMarkdownTableBlock(current, table, Boolean(options.force));
+
+  if (options.dryRun) {
+    dependencies.log(updated);
+    return;
+  }
+
+  await dependencies.writeFile(targetPath, updated, "utf8");
+}
+
+export function updateMarkdownTableBlock(markdown: string, table: string, force: boolean): string {
+  const block = `${tableBlockStart}\n${table}\n${tableBlockEnd}`;
+  const blockPattern = new RegExp(`${escapeRegExp(tableBlockStart)}[\\s\\S]*?${escapeRegExp(tableBlockEnd)}`);
+
+  if (blockPattern.test(markdown)) {
+    return markdown.replace(blockPattern, block);
+  }
+
+  if (force) {
+    const separator = markdown.endsWith("\n") ? "\n" : "\n\n";
+    return `${markdown}${separator}${block}\n`;
+  }
+
+  throw new Error(`No configenvy table block found. Add ${tableBlockStart} and ${tableBlockEnd}, or rerun with --force.`);
+}
+
 export function resolveOutputPath(
   projectPath: string,
   outputPath: string,
@@ -212,6 +256,10 @@ function escapeAnnotationProperty(value: string): string {
 
 function escapeAnnotationMessage(value: string): string {
   return value.replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function isNodeError(error: unknown): error is NodeJS.ErrnoException {
