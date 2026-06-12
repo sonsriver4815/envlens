@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { resolveOutputPath, runCli, updateMarkdownTableBlock, type CliDependencies } from "../src/index";
+import { cliVersion, resolveOutputPath, runCli, updateMarkdownTableBlock, type CliDependencies } from "../src/index";
 
 class ExitSignal extends Error {
   constructor(readonly code: number) {
@@ -110,6 +110,7 @@ describe("configenvy cli", () => {
     };
 
     expect(cliPackage.name).toBe("configenvy");
+    expect(cliVersion).toBe(cliPackage.version);
     expect(cliPackage.bin.configenvy).toBe("dist/index.js");
     expect(cliPackage.dependencies["@configenvy/core"]).toBe(corePackage.version);
     expect(cliPackage.version).toBe(corePackage.version);
@@ -340,6 +341,66 @@ describe("configenvy cli", () => {
         }, null, 2)}\n`
       }
     ]);
+  });
+
+  it("applies a framework preset with init --preset", async () => {
+    const outcome = await invokeCli(["init", "examples/nextjs", "--preset", "nextjs"], {
+      scanProject: async (options) => ({
+        diagnostics: [],
+        references: [
+          { file: "src/index.ts", kind: "code", line: 1, name: "DATABASE_URL" }
+        ],
+        rootDir: options.rootDir,
+        variables: ["DATABASE_URL"]
+      })
+    });
+
+    expect(outcome.exitCode).toBeNull();
+    expect(outcome.writes).toEqual([
+      {
+        path: resolve("examples/nextjs", "configenvy.config.json"),
+        content: `${JSON.stringify({
+          required: ["DATABASE_URL"],
+          optional: ["NEXT_PUBLIC_APP_URL"],
+          ignore: ["NEXT_RUNTIME", "NODE_ENV"],
+          docs: ["README.md", "docs"]
+        }, null, 2)}\n`
+      }
+    ]);
+  });
+
+  it("keeps the vercel preset platform-specific", async () => {
+    const outcome = await invokeCli(["init", "examples/vercel", "--preset", "vercel"], {
+      scanProject: async (options) => ({
+        diagnostics: [],
+        references: [
+          { file: "vercel.json", kind: "config", line: 1, name: "VERCEL_TOKEN" }
+        ],
+        rootDir: options.rootDir,
+        variables: ["VERCEL_TOKEN"]
+      })
+    });
+
+    expect(outcome.exitCode).toBeNull();
+    expect(outcome.writes).toEqual([
+      {
+        path: resolve("examples/vercel", "configenvy.config.json"),
+        content: `${JSON.stringify({
+          required: ["VERCEL_TOKEN"],
+          optional: [],
+          ignore: ["NODE_ENV", "VERCEL", "VERCEL_BRANCH_URL", "VERCEL_ENV", "VERCEL_PROJECT_PRODUCTION_URL", "VERCEL_REGION", "VERCEL_URL"],
+          docs: ["README.md", "docs"]
+        }, null, 2)}\n`
+      }
+    ]);
+  });
+
+  it("rejects unknown init presets", async () => {
+    const outcome = await invokeCli(["init", "examples/nextjs", "--preset", "rails"]);
+
+    expect(outcome.exitCode).toBe(1);
+    expect(outcome.writes).toEqual([]);
+    expect(outcome.errors).toEqual(["Unknown preset \"rails\". Available presets: docker, nextjs, vercel, vite."]);
   });
 
   it("can create a .env.example draft with init --env-example", async () => {

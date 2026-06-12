@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { readFile, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { isAbsolute, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { Command } from "commander";
@@ -23,6 +24,7 @@ type InitOptions = {
   dryRun?: boolean;
   envExample?: boolean;
   force?: boolean;
+  preset?: string;
 };
 
 export type CliDependencies = {
@@ -59,7 +61,7 @@ export function createProgram(dependencies: CliDependencies = defaultDependencie
   program
     .name("configenvy")
     .description("Find missing, unused, undocumented, and risky environment variables.")
-    .version("0.1.4");
+    .version(cliVersion);
 
   program
     .command("doctor")
@@ -106,6 +108,7 @@ export function createProgram(dependencies: CliDependencies = defaultDependencie
     .option("--dry-run", "print planned files instead of writing them")
     .option("--env-example", "also create a .env.example draft from detected variables")
     .option("--force", "overwrite generated files if they already exist")
+    .option("--preset <name>", `apply a preset: ${availablePresetList}`)
     .action(async (projectPath: string, options: InitOptions) => {
       await runInit(projectPath, options, dependencies);
     });
@@ -122,17 +125,51 @@ export function createProgram(dependencies: CliDependencies = defaultDependencie
   return program;
 }
 
-const starterConfig = {
+type StarterConfig = {
+  docs: string[];
+  ignore: string[];
+  optional: string[];
+  required: string[];
+};
+
+const starterConfig: StarterConfig = {
   required: [],
   optional: [],
   ignore: ["NODE_ENV"],
   docs: ["README.md", "docs"]
 };
 
+type PresetName = keyof typeof presetConfigs;
+
+const presetConfigs = {
+  docker: {
+    optional: ["COMPOSE_PROJECT_NAME"],
+    ignore: ["HOSTNAME"]
+  },
+  nextjs: {
+    optional: ["NEXT_PUBLIC_APP_URL"],
+    ignore: ["NEXT_RUNTIME"]
+  },
+  vercel: {
+    ignore: ["VERCEL", "VERCEL_ENV", "VERCEL_URL", "VERCEL_BRANCH_URL", "VERCEL_PROJECT_PRODUCTION_URL", "VERCEL_REGION"]
+  },
+  vite: {
+    optional: ["VITE_PUBLIC_URL"],
+    ignore: ["BASE_URL", "DEV", "MODE", "PROD", "SSR"]
+  }
+} satisfies Record<string, Partial<StarterConfig>>;
+
+const availablePresetNames = Object.keys(presetConfigs).sort();
+const availablePresetList = availablePresetNames.join(", ");
+
 type InitFile = {
   content: string;
   path: string;
 };
+
+const require = createRequire(import.meta.url);
+const cliPackage = require("../package.json") as { version: string };
+export const cliVersion = cliPackage.version;
 
 export const tableBlockStart = "<!-- configenvy:start -->";
 export const tableBlockEnd = "<!-- configenvy:end -->";
@@ -176,10 +213,12 @@ export async function runInit(
 ): Promise<void> {
   const rootDir = dependencies.resolvePath(projectPath);
   const result = await dependencies.scanProject({ rootDir });
+  const preset = resolvePreset(options.preset, dependencies);
+  if (options.preset && !preset) return;
   const existingEnvExample = options.envExample && options.force
     ? await readOptionalText(dependencies.resolvePath(rootDir, ".env.example"), dependencies)
     : undefined;
-  const files = buildInitFiles(rootDir, result, Boolean(options.envExample), dependencies.resolvePath, existingEnvExample);
+  const files = buildInitFiles(rootDir, result, Boolean(options.envExample), dependencies.resolvePath, existingEnvExample, preset);
 
   if (options.dryRun) {
     for (const file of files) {
@@ -215,11 +254,15 @@ export function buildInitFiles(
   result: ScanResult,
   includeEnvExample: boolean,
   resolvePath: typeof resolve = resolve,
-  existingEnvExample?: string
+  existingEnvExample?: string,
+  preset?: Partial<StarterConfig>
 ): InitFile[] {
   const required = detectedRuntimeVariables(result);
   const config = {
     ...starterConfig,
+    docs: mergeUnique(starterConfig.docs, preset?.docs ?? []),
+    ignore: mergeUnique(starterConfig.ignore, preset?.ignore ?? []),
+    optional: mergeUnique(starterConfig.optional, preset?.optional ?? []),
     required
   };
   const files: InitFile[] = [
@@ -237,6 +280,20 @@ export function buildInitFiles(
   }
 
   return files;
+}
+
+function resolvePreset(name: string | undefined, dependencies: CliDependencies): Partial<StarterConfig> | undefined {
+  if (!name) return undefined;
+  if (name in presetConfigs) {
+    return presetConfigs[name as PresetName];
+  }
+  dependencies.error(`Unknown preset "${name}". Available presets: ${availablePresetList}.`);
+  dependencies.exit(1);
+  return undefined;
+}
+
+function mergeUnique(base: string[], extra: readonly string[]): string[] {
+  return [...new Set([...base, ...extra])].sort();
 }
 
 async function ensureInitTargetsDoNotExist(files: InitFile[], dependencies: CliDependencies): Promise<boolean> {

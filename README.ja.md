@@ -125,6 +125,7 @@ configenvy doctor --strict [path]
 configenvy check --ci [path]
 configenvy check --ci --format sarif [path]
 configenvy init [path]
+configenvy init [path] --preset nextjs
 configenvy init [path] --env-example
 configenvy init [path] --dry-run
 configenvy table [path] --out README.env.md
@@ -133,7 +134,7 @@ configenvy table [path] --update README.md --dry-run
 configenvy explain DATABASE_URL [path]
 ```
 
-`init` は `configenvy.config.json` を作ります。既存ファイルは上書きしません。`.env.example` の下書きも作りたい場合は `--env-example`、書き込み内容を事前確認したい場合は `--dry-run`、生成ファイルを上書きしたい場合は `--force` を使います。
+`init` は `configenvy.config.json` を作ります。既存ファイルは上書きしません。よくある構成には `--preset`、`.env.example` の下書きも作りたい場合は `--env-example`、書き込み内容を事前確認したい場合は `--dry-run`、生成ファイルを上書きしたい場合は `--force` を使います。詳細は [Framework Presets](docs/presets.md) を見てください。
 
 ## What configenvy checks
 
