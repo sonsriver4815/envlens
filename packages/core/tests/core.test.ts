@@ -57,6 +57,60 @@ describe("configenvy core", () => {
     expect(explanation).toContain("src/index.ts:1");
   });
 
+  it("extracts env references from JS and TS AST patterns", async () => {
+    const root = await fixture({
+      "src/index.ts": [
+        "const { DATABASE_URL, STRIPE_SECRET_KEY: stripeKey } = process.env;",
+        "console.log(process.env.API_BASE_URL);",
+        "console.log(process.env['CACHE_URL']);",
+        "console.log(import.meta.env.VITE_PUBLIC_URL);",
+        "console.log(Deno.env.get('DENO_TOKEN'));"
+      ].join("\n"),
+      ".env.example": [
+        "DATABASE_URL=postgres://user:pass@localhost:5432/app",
+        "STRIPE_SECRET_KEY=replace-me",
+        "API_BASE_URL=http://localhost:3000",
+        "CACHE_URL=redis://localhost:6379",
+        "VITE_PUBLIC_URL=http://localhost:5173",
+        "DENO_TOKEN=replace-me"
+      ].join("\n"),
+      "README.md": "DATABASE_URL STRIPE_SECRET_KEY API_BASE_URL CACHE_URL VITE_PUBLIC_URL DENO_TOKEN"
+    });
+
+    const result = await scanProject({ rootDir: root });
+    const codeVariables = result.references.filter((reference) => reference.kind === "code").map((reference) => reference.name);
+
+    expect(codeVariables).toEqual([
+      "DATABASE_URL",
+      "STRIPE_SECRET_KEY",
+      "API_BASE_URL",
+      "CACHE_URL",
+      "VITE_PUBLIC_URL",
+      "DENO_TOKEN"
+    ]);
+  });
+
+  it("reports dynamic env access without adding a fake variable", async () => {
+    const root = await fixture({
+      "src/index.ts": [
+        "console.log(process.env[prefix + '_TOKEN']);",
+        "console.log(Deno.env.get(runtimeName));"
+      ].join("\n"),
+      ".env.example": "",
+      "README.md": ""
+    });
+
+    const result = await scanProject({ rootDir: root });
+
+    expect(result.variables).not.toContain("<dynamic-env>");
+    expect(result.diagnostics).toContainEqual(expect.objectContaining({
+      code: "dynamic-env",
+      severity: "warning",
+      variable: "dynamic env access",
+      files: ["src/index.ts"]
+    }));
+  });
+
   it("builds SARIF output for diagnostics", async () => {
     const root = await fixture({
       "src/index.ts": "console.log(process.env.DATABASE_URL)",
@@ -176,6 +230,20 @@ describe("configenvy core", () => {
     expect(result.variables).not.toContain("VERCEL_ONLY_SECRET");
     expect(result.variables).not.toContain("CACHE_ONLY_SECRET");
     expect(result.variables).not.toContain("OUT_ONLY_SECRET");
+  });
+
+  it("skips files larger than the scanner size limit", async () => {
+    const root = await fixture({
+      "src/index.ts": "console.log(process.env.DATABASE_URL)",
+      "src/large.ts": `${"x".repeat(1024 * 1024 + 1)}\nconsole.log(process.env.LARGE_ONLY_SECRET)`,
+      ".env.example": "DATABASE_URL=postgres://user:pass@localhost:5432/app\n",
+      "README.md": "DATABASE_URL is required."
+    });
+
+    const result = await scanProject({ rootDir: root });
+
+    expect(result.variables).toContain("DATABASE_URL");
+    expect(result.variables).not.toContain("LARGE_ONLY_SECRET");
   });
 
   it("skips test and fixture directories", async () => {

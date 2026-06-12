@@ -145,6 +145,7 @@ function markdownTableCell(value: string): string {
 const diagnosticRuleDescriptions: Record<DiagnosticCode, string> = {
   "ci-missing": "A variable appears in CI or deployment config but is not described for contributors.",
   "dangerous-default": "An example file contains a value that looks risky for contributors to copy.",
+  "dynamic-env": "Code reads environment variables through a dynamic expression that cannot be resolved statically.",
   "missing-example": "A variable is used by code or required by config but is missing from env example files.",
   undocumented: "A variable is not mentioned in README or docs.",
   "unused-example": "A variable is documented in an env example but was not found in code or CI config."
@@ -153,6 +154,7 @@ const diagnosticRuleDescriptions: Record<DiagnosticCode, string> = {
 const diagnosticRuleDefaultLevels: Record<DiagnosticCode, "error" | "warning"> = {
   "ci-missing": "warning",
   "dangerous-default": "error",
+  "dynamic-env": "warning",
   "missing-example": "error",
   undocumented: "warning",
   "unused-example": "warning"

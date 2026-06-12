@@ -14,7 +14,8 @@ export type DiagnosticCode =
   | "unused-example"
   | "undocumented"
   | "dangerous-default"
-  | "ci-missing";
+  | "ci-missing"
+  | "dynamic-env";
 
 export type DiagnosticSeverity = "warning" | "error";
 

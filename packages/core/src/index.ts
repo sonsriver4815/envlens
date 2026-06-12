@@ -1,3 +1,4 @@
+import ts from "typescript";
 import type { Diagnostic, EnvlensConfig, EnvReference, EnvSourceKind, ScanOptions, ScanResult } from "./types.js";
 
 export type {
@@ -23,6 +24,8 @@ export const defaultConfig: EnvlensConfig = {
 const exampleFileNames = new Set([".env.example", ".env.sample", ".env.template"]);
 const codeExtensions = new Set([".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs"]);
 const workflowExtensions = new Set([".yml", ".yaml"]);
+const dynamicEnvReferenceName = "<dynamic-env>";
+const maxScannedFileBytes = 1024 * 1024;
 const skippedDirectoryNames = new Set([
   ".cache",
   ".git",
@@ -76,7 +79,7 @@ export async function scanProject(options: ScanOptions): Promise<ScanResult> {
 
   const filteredReferences = references.filter((reference) => !config.ignore.includes(reference.name));
   const diagnostics = buildDiagnostics(filteredReferences, config, Boolean(options.strict));
-  const variables = [...new Set(filteredReferences.map((reference) => reference.name))].sort();
+  const variables = [...new Set(filteredReferences.map((reference) => reference.name).filter((name) => name !== dynamicEnvReferenceName))].sort();
 
   return {
     rootDir,
@@ -88,10 +91,12 @@ export async function scanProject(options: ScanOptions): Promise<ScanResult> {
 
 function buildDiagnostics(references: EnvReference[], config: EnvlensConfig, strict: boolean): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
-  const exampleVars = byKind(references, "example");
-  const codeVars = byKind(references, "code");
-  const docsVars = byKind(references, "docs");
-  const ciVars = new Set([...byKind(references, "ci"), ...byKind(references, "config")]);
+  const dynamicReferences = references.filter((reference) => reference.name === dynamicEnvReferenceName);
+  const namedReferences = references.filter((reference) => reference.name !== dynamicEnvReferenceName);
+  const exampleVars = byKind(namedReferences, "example");
+  const codeVars = byKind(namedReferences, "code");
+  const docsVars = byKind(namedReferences, "docs");
+  const ciVars = new Set([...byKind(namedReferences, "ci"), ...byKind(namedReferences, "config")]);
   const requiredVars = new Set(config.required);
   const optionalVars = new Set(config.optional);
 
@@ -102,7 +107,7 @@ function buildDiagnostics(references: EnvReference[], config: EnvlensConfig, str
         severity: "error",
         variable,
         message: `${variable} is used by code or required by config but is missing from .env.example files.`,
-        files: filesFor(references, variable)
+        files: filesFor(namedReferences, variable)
       });
     }
   }
@@ -114,7 +119,7 @@ function buildDiagnostics(references: EnvReference[], config: EnvlensConfig, str
         severity: "warning",
         variable,
         message: `${variable} is documented in an env example but was not found in code or CI config.`,
-        files: filesFor(references, variable)
+        files: filesFor(namedReferences, variable)
       });
     }
   }
@@ -126,7 +131,7 @@ function buildDiagnostics(references: EnvReference[], config: EnvlensConfig, str
         severity: strict ? "error" : "warning",
         variable,
         message: `${variable} is not mentioned in README or docs.`,
-        files: filesFor(references, variable)
+        files: filesFor(namedReferences, variable)
       });
     }
   }
@@ -150,9 +155,19 @@ function buildDiagnostics(references: EnvReference[], config: EnvlensConfig, str
         severity: strict ? "error" : "warning",
         variable,
         message: `${variable} appears in CI or deployment config but is not described for contributors.`,
-        files: filesFor(references, variable)
+        files: filesFor(namedReferences, variable)
       });
     }
+  }
+
+  if (dynamicReferences.length > 0) {
+    diagnostics.push({
+      code: "dynamic-env",
+      severity: "warning",
+      variable: "dynamic env access",
+      message: "Environment variables are read through a dynamic expression and cannot be fully checked statically.",
+      files: [...new Set(dynamicReferences.map((reference) => reference.file))]
+    });
   }
 
   return diagnostics.sort((a, b) => a.variable.localeCompare(b.variable) || a.code.localeCompare(b.code));
@@ -200,13 +215,112 @@ async function parseDotenvFile(file: string, relativePath: string): Promise<EnvR
 
 async function parseCodeFile(file: string, relativePath: string): Promise<EnvReference[]> {
   const content = await readText(file);
-  const patterns = [
+  const references = extractCodeReferencesWithAst(content, relativePath, scriptKindFor(file));
+  if (references.length > 0) {
+    return references;
+  }
+
+  return extractReferences(content, relativePath, "code", [
     /process\.env\.([A-Za-z_][A-Za-z0-9_]*)/g,
     /process\.env\[['"]([A-Za-z_][A-Za-z0-9_]*)['"]\]/g,
     /import\.meta\.env\.([A-Za-z_][A-Za-z0-9_]*)/g,
     /Deno\.env\.get\(['"]([A-Za-z_][A-Za-z0-9_]*)['"]\)/g
-  ];
-  return extractReferences(content, relativePath, "code", patterns);
+  ]);
+}
+
+function extractCodeReferencesWithAst(content: string, file: string, scriptKind: ts.ScriptKind): EnvReference[] {
+  const sourceFile = ts.createSourceFile(file, content, ts.ScriptTarget.Latest, true, scriptKind);
+  const references: EnvReference[] = [];
+  const seen = new Set<string>();
+
+  function addReference(name: string, node: ts.Node): void {
+    if (ignoredVariableName(name)) return;
+    const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile));
+    const lineNumber = line + 1;
+    const key = `${name}:${lineNumber}:code`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    references.push({ name, file, line: lineNumber, kind: "code" });
+  }
+
+  function visit(node: ts.Node): void {
+    if (ts.isPropertyAccessExpression(node)) {
+      if (isProcessEnvExpression(node.expression) || isImportMetaEnvExpression(node.expression)) {
+        addReference(node.name.text, node.name);
+      }
+    } else if (ts.isElementAccessExpression(node)) {
+      const envObject = node.expression;
+      const name = stringLiteralText(node.argumentExpression);
+      if (isProcessEnvExpression(envObject) || isImportMetaEnvExpression(envObject)) {
+        addReference(name ?? dynamicEnvReferenceName, node.argumentExpression);
+      }
+    } else if (ts.isCallExpression(node)) {
+      const name = node.arguments[0] ? stringLiteralText(node.arguments[0]) : undefined;
+      if (ts.isPropertyAccessExpression(node.expression) && node.expression.name.text === "get" && isDenoEnvExpression(node.expression.expression)) {
+        addReference(name ?? dynamicEnvReferenceName, node.arguments[0] ?? node.expression.name);
+      }
+    } else if (ts.isVariableDeclaration(node) && ts.isObjectBindingPattern(node.name) && isProcessEnvExpression(node.initializer)) {
+      for (const element of node.name.elements) {
+        if (ts.isIdentifier(element.name) && !element.propertyName) {
+          addReference(element.name.text, element.name);
+        } else if (element.propertyName && ts.isIdentifier(element.propertyName)) {
+          addReference(element.propertyName.text, element.propertyName);
+        } else if (element.propertyName && ts.isStringLiteralLike(element.propertyName)) {
+          addReference(element.propertyName.text, element.propertyName);
+        }
+      }
+    }
+
+    ts.forEachChild(node, visit);
+  }
+
+  visit(sourceFile);
+  return references;
+}
+
+function isProcessEnvExpression(node: ts.Node | undefined): boolean {
+  return Boolean(
+    node &&
+      ts.isPropertyAccessExpression(node) &&
+      node.name.text === "env" &&
+      ts.isIdentifier(node.expression) &&
+      node.expression.text === "process"
+  );
+}
+
+function isImportMetaEnvExpression(node: ts.Node | undefined): boolean {
+  return Boolean(
+    node &&
+      ts.isPropertyAccessExpression(node) &&
+      node.name.text === "env" &&
+      ts.isMetaProperty(node.expression) &&
+      node.expression.keywordToken === ts.SyntaxKind.ImportKeyword &&
+      node.expression.name.text === "meta"
+  );
+}
+
+function isDenoEnvExpression(node: ts.Node | undefined): boolean {
+  return Boolean(
+    node &&
+      ts.isPropertyAccessExpression(node) &&
+      node.name.text === "env" &&
+      ts.isIdentifier(node.expression) &&
+      node.expression.text === "Deno"
+  );
+}
+
+function stringLiteralText(node: ts.Node | undefined): string | undefined {
+  if (!node) return undefined;
+  if (ts.isStringLiteralLike(node)) return node.text;
+  if (ts.isNoSubstitutionTemplateLiteral(node)) return node.text;
+  return undefined;
+}
+
+function scriptKindFor(file: string): ts.ScriptKind {
+  if (file.endsWith(".tsx")) return ts.ScriptKind.TSX;
+  if (file.endsWith(".jsx")) return ts.ScriptKind.JSX;
+  if (file.endsWith(".js") || file.endsWith(".mjs") || file.endsWith(".cjs")) return ts.ScriptKind.JS;
+  return ts.ScriptKind.TS;
 }
 
 async function parseDocsFile(file: string, relativePath: string): Promise<EnvReference[]> {
@@ -325,6 +439,8 @@ async function listFiles(rootDir: string): Promise<string[]> {
       if (entry.isDirectory()) {
         await walk(fullPath);
       } else {
+        const stat = await fs.stat(fullPath);
+        if (stat.size > maxScannedFileBytes) continue;
         files.push(fullPath);
       }
     }
