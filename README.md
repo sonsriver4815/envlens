@@ -134,7 +134,7 @@ configenvy table [path] --update README.md --dry-run
 configenvy explain DATABASE_URL [path]
 ```
 
-`init` creates `configenvy.config.json` without overwriting existing files. Add `--preset` for common stacks, `--env-example` to draft missing variables into `.env.example`, `--dry-run` to preview writes, or `--force` to overwrite generated files. See [Framework Presets](docs/presets.md).
+`init` creates `configenvy.config.json` without overwriting existing files. Add `--preset` for common stacks, `--env-example` to draft missing variables into `.env.example`, `--dry-run` to preview writes, or `--force` to overwrite generated files. Presets include Astro, Docker, Next.js, Nuxt, SvelteKit, Vercel, and Vite. See [Framework Presets](docs/presets.md).
 
 ## What configenvy checks
 

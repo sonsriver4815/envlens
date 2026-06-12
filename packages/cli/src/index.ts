@@ -142,6 +142,10 @@ const starterConfig: StarterConfig = {
 type PresetName = keyof typeof presetConfigs;
 
 const presetConfigs = {
+  astro: {
+    optional: ["PUBLIC_SITE_URL"],
+    ignore: ["BASE_URL", "DEV", "MODE", "PROD", "SSR"]
+  },
   docker: {
     optional: ["COMPOSE_PROJECT_NAME"],
     ignore: ["HOSTNAME"]
@@ -149,6 +153,12 @@ const presetConfigs = {
   nextjs: {
     optional: ["NEXT_PUBLIC_APP_URL"],
     ignore: ["NEXT_RUNTIME"]
+  },
+  nuxt: {
+    optional: ["NUXT_PUBLIC_API_BASE"]
+  },
+  sveltekit: {
+    optional: ["PUBLIC_BASE_URL"]
   },
   vercel: {
     ignore: ["VERCEL", "VERCEL_ENV", "VERCEL_URL", "VERCEL_BRANCH_URL", "VERCEL_PROJECT_PRODUCTION_URL", "VERCEL_REGION"]

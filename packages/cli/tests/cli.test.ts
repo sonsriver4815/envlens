@@ -395,12 +395,54 @@ describe("configenvy cli", () => {
     ]);
   });
 
+  it.each([
+    {
+      name: "astro",
+      optional: ["PUBLIC_SITE_URL"],
+      ignore: ["BASE_URL", "DEV", "MODE", "NODE_ENV", "PROD", "SSR"]
+    },
+    {
+      name: "nuxt",
+      optional: ["NUXT_PUBLIC_API_BASE"],
+      ignore: ["NODE_ENV"]
+    },
+    {
+      name: "sveltekit",
+      optional: ["PUBLIC_BASE_URL"],
+      ignore: ["NODE_ENV"]
+    }
+  ])("applies the $name framework preset", async ({ ignore, name, optional }) => {
+    const outcome = await invokeCli(["init", `examples/${name}`, "--preset", name], {
+      scanProject: async (options) => ({
+        diagnostics: [],
+        references: [
+          { file: "src/index.ts", kind: "code", line: 1, name: "DATABASE_URL" }
+        ],
+        rootDir: options.rootDir,
+        variables: ["DATABASE_URL"]
+      })
+    });
+
+    expect(outcome.exitCode).toBeNull();
+    expect(outcome.writes).toEqual([
+      {
+        path: resolve(`examples/${name}`, "configenvy.config.json"),
+        content: `${JSON.stringify({
+          required: ["DATABASE_URL"],
+          optional,
+          ignore,
+          docs: ["README.md", "docs"]
+        }, null, 2)}\n`
+      }
+    ]);
+  });
+
   it("rejects unknown init presets", async () => {
     const outcome = await invokeCli(["init", "examples/nextjs", "--preset", "rails"]);
 
     expect(outcome.exitCode).toBe(1);
     expect(outcome.writes).toEqual([]);
-    expect(outcome.errors).toEqual(["Unknown preset \"rails\". Available presets: docker, nextjs, vercel, vite."]);
+    expect(outcome.errors).toEqual(["Unknown preset \"rails\". Available presets: astro, docker, nextjs, nuxt, sveltekit, vercel, vite."]);
   });
 
   it("can create a .env.example draft with init --env-example", async () => {
