@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: sonsriver4815/configenvy/.github/actions/configenvy@main
+      - uses: sonsriver4815/configenvy/.github/actions/configenvy@v0.1.7
         with:
           path: .
 ```
