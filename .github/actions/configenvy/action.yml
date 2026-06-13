@@ -1,0 +1,45 @@
+name: configenvy
+description: Run configenvy in GitHub Actions.
+
+inputs:
+  path:
+    description: Project directory to scan.
+    required: false
+    default: "."
+  strict:
+    description: Pass --strict to configenvy.
+    required: false
+    default: "false"
+  format:
+    description: Output format: text, json, or sarif.
+    required: false
+    default: "text"
+  node-version:
+    description: Node.js version used to run configenvy.
+    required: false
+    default: "22"
+  package:
+    description: npm package spec to execute.
+    required: false
+    default: "configenvy@latest"
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+    - name: Run configenvy
+      shell: bash
+      run: |
+        args=(check --ci "${{ inputs.path }}")
+
+        if [ "${{ inputs.strict }}" = "true" ]; then
+          args+=(--strict)
+        fi
+
+        if [ "${{ inputs.format }}" != "text" ]; then
+          args+=(--format "${{ inputs.format }}")
+        fi
+
+        npx --yes "${{ inputs.package }}" "${args[@]}"

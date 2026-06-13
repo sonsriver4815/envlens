@@ -166,6 +166,23 @@ configenvy explain DATABASE_URL [path]
 
 `configenvy check --ci` also emits GitHub Actions annotations for warnings and errors when using the default text output. Use `--format sarif` when you want to upload results to GitHub code scanning or another SARIF-compatible tool.
 
+## GitHub Action
+
+```yaml
+name: configenvy
+on: [pull_request]
+jobs:
+  configenvy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: sonsriver4815/configenvy/.github/actions/configenvy@main
+        with:
+          path: .
+```
+
+See [CI](docs/ci.md) for inputs and SARIF examples.
+
 ## Config
 
 configenvy works without a config file. Add `configenvy.config.json` to your project root when you want to mark variables as required or ignore noisy ones.
@@ -192,8 +209,8 @@ Most setup failures are not mysterious. A variable was added in code but not in 
 
 ## Roadmap
 
-- GitHub Action for PR comments
-- Framework presets for Next.js, Vite, Remix, and Docker-heavy projects
+- PR summary output for GitHub Actions
+- More framework presets and auto-detection
 - Deeper AST parsing for fewer false positives and missed references
 - VS Code extension for local feedback while editing env docs
 

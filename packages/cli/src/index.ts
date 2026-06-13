@@ -77,8 +77,9 @@ export function createProgram(dependencies: CliDependencies = defaultDependencie
     .argument("[path]", "project directory", ".")
     .option("--ci", "fail on warnings and errors")
     .option("--format <format>", "output format: text, json, or sarif", "text")
+    .option("--strict", "treat documentation warnings as errors")
     .action(async (projectPath: string, options: DoctorOptions) => {
-      await runDoctor(projectPath, { ...options, strict: Boolean(options.ci), ci: Boolean(options.ci) }, dependencies);
+      await runDoctor(projectPath, { ...options, strict: Boolean(options.strict || options.ci), ci: Boolean(options.ci) }, dependencies);
     });
 
   program

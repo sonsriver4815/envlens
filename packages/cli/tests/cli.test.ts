@@ -154,6 +154,13 @@ describe("configenvy cli", () => {
     expect(scanCalls).toEqual([{ rootDir: resolve("examples/broken"), strict: true }]);
   });
 
+  it("passes strict through for check --strict", async () => {
+    const outcome = await invokeCli(["check", "--strict", "examples/nextjs"]);
+
+    expect(outcome.exitCode).toBeNull();
+    expect(outcome.scanCalls).toEqual([{ rootDir: resolve("examples/nextjs"), strict: true }]);
+  });
+
   it("escapes GitHub Actions annotations for check --ci", async () => {
     const outcome = await invokeCli(["check", "--ci", "examples/broken"], {
       scanProject: async (options) => ({

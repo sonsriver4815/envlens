@@ -16,3 +16,18 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm run pack:check
+  action-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: configenvy
+        uses: ./.github/actions/configenvy
+        continue-on-error: true
+        with:
+          path: examples/broken
+          package: configenvy@latest
+      - name: Expect broken example to fail
+        if: steps.configenvy.outcome != 'failure'
+        run: |
+          echo "Expected configenvy action to fail against examples/broken."
+          exit 1
