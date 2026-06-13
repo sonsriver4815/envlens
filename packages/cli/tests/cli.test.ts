@@ -444,12 +444,124 @@ describe("configenvy cli", () => {
     ]);
   });
 
+  it("detects a framework preset with init --preset auto from package.json", async () => {
+    const outcome = await invokeCli(["init", "examples/nextjs", "--preset", "auto", "--dry-run"], {
+      readFile: async (path) => {
+        if (String(path).endsWith("package.json")) {
+          return JSON.stringify({ dependencies: { next: "^15.0.0" } });
+        }
+        const error = new Error("not found") as NodeJS.ErrnoException;
+        error.code = "ENOENT";
+        throw error;
+      },
+      scanProject: async (options) => ({
+        diagnostics: [],
+        references: [
+          { file: "src/index.ts", kind: "code", line: 1, name: "DATABASE_URL" }
+        ],
+        rootDir: options.rootDir,
+        variables: ["DATABASE_URL"]
+      })
+    });
+
+    expect(outcome.exitCode).toBeNull();
+    expect(outcome.logs).toEqual([
+      "Detected preset: nextjs\nReason: dependency \"next\"",
+      `Would write ${resolve("examples/nextjs", "configenvy.config.json")}`,
+      `${JSON.stringify({
+        required: ["DATABASE_URL"],
+        optional: ["NEXT_PUBLIC_APP_URL"],
+        ignore: ["NEXT_RUNTIME", "NODE_ENV"],
+        docs: ["README.md", "docs"]
+      }, null, 2)}`
+    ]);
+  });
+
+  it("prefers framework presets over Vite when auto-detecting package.json", async () => {
+    const outcome = await invokeCli(["init", "examples/astro", "--preset", "auto", "--dry-run"], {
+      readFile: async (path) => {
+        if (String(path).endsWith("package.json")) {
+          return JSON.stringify({ devDependencies: { astro: "^5.0.0", vite: "^6.0.0" } });
+        }
+        const error = new Error("not found") as NodeJS.ErrnoException;
+        error.code = "ENOENT";
+        throw error;
+      }
+    });
+
+    expect(outcome.exitCode).toBeNull();
+    expect(outcome.logs[0]).toBe("Detected preset: astro\nReason: dependency \"astro\"");
+  });
+
+  it("detects a framework preset with init --preset auto from config files", async () => {
+    const outcome = await invokeCli(["init", "examples/vite", "--preset", "auto", "--dry-run"], {
+      readFile: async (path) => {
+        if (String(path).endsWith("vite.config.ts")) {
+          return "export default {};";
+        }
+        const error = new Error("not found") as NodeJS.ErrnoException;
+        error.code = "ENOENT";
+        throw error;
+      },
+      scanProject: async (options) => ({
+        diagnostics: [],
+        references: [
+          { file: "src/index.ts", kind: "code", line: 1, name: "VITE_API_URL" }
+        ],
+        rootDir: options.rootDir,
+        variables: ["VITE_API_URL"]
+      })
+    });
+
+    expect(outcome.exitCode).toBeNull();
+    expect(outcome.logs).toEqual([
+      "Detected preset: vite\nReason: found vite.config.ts",
+      `Would write ${resolve("examples/vite", "configenvy.config.json")}`,
+      `${JSON.stringify({
+        required: ["VITE_API_URL"],
+        optional: ["VITE_PUBLIC_URL"],
+        ignore: ["BASE_URL", "DEV", "MODE", "NODE_ENV", "PROD", "SSR"],
+        docs: ["README.md", "docs"]
+      }, null, 2)}`
+    ]);
+  });
+
+  it("falls back to the base config when init --preset auto cannot detect a framework", async () => {
+    const outcome = await invokeCli(["init", "examples/plain", "--preset", "auto", "--dry-run"], {
+      readFile: async () => {
+        const error = new Error("not found") as NodeJS.ErrnoException;
+        error.code = "ENOENT";
+        throw error;
+      },
+      scanProject: async (options) => ({
+        diagnostics: [],
+        references: [
+          { file: "src/index.ts", kind: "code", line: 1, name: "DATABASE_URL" }
+        ],
+        rootDir: options.rootDir,
+        variables: ["DATABASE_URL"]
+      })
+    });
+
+    expect(outcome.exitCode).toBeNull();
+    expect(outcome.logs).toEqual([
+      "No framework preset detected. Using the base config.",
+      `Would write ${resolve("examples/plain", "configenvy.config.json")}`,
+      `${JSON.stringify({
+        required: ["DATABASE_URL"],
+        optional: [],
+        ignore: ["NODE_ENV"],
+        docs: ["README.md", "docs"]
+      }, null, 2)}`
+    ]);
+  });
+
   it("rejects unknown init presets", async () => {
     const outcome = await invokeCli(["init", "examples/nextjs", "--preset", "rails"]);
 
     expect(outcome.exitCode).toBe(1);
     expect(outcome.writes).toEqual([]);
-    expect(outcome.errors).toEqual(["Unknown preset \"rails\". Available presets: astro, docker, nextjs, nuxt, sveltekit, vercel, vite."]);
+    expect(outcome.errors).toEqual(["Unknown preset \"rails\". Available presets: auto, astro, docker, nextjs, nuxt, sveltekit, vercel, vite."]);
   });
 
   it("can create a .env.example draft with init --env-example", async () => {
