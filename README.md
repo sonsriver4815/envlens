@@ -25,6 +25,12 @@ npx configenvy@latest doctor
 
 Most projects break for boring reasons: a variable exists in code, but not in `.env.example`; a README table is stale; CI uses a secret nobody documented.
 
+Starting a new config? Let configenvy detect your stack:
+
+```powershell
+npx configenvy@latest init --preset auto --dry-run
+```
+
 ## What It Looks Like
 
 Given this code:
@@ -60,6 +66,7 @@ WARN undocumented STRIPE_WEBHOOK_SECRET
 - Checks whether important variables are mentioned in README or docs.
 - Flags sample values that look like real tokens, private values, or production URLs.
 - Reuses `.env.example` comments as variable descriptions in generated tables.
+- Detects common framework presets for Next.js, Vite, Astro, Nuxt, SvelteKit, Vercel, and Docker.
 - Generates Markdown tables you can paste into a README.
 - Prints readable output for humans and JSON for scripts or CI.
 
@@ -214,7 +221,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: sonsriver4815/configenvy/.github/actions/configenvy@v0.1.7
+      - uses: sonsriver4815/configenvy/.github/actions/configenvy@v0.2.0
         with:
           path: .
 ```
@@ -223,7 +230,7 @@ See [CI](docs/ci.md) for inputs and SARIF examples.
 
 ## Config
 
-configenvy works without a config file. Add `configenvy.config.json` to your project root when you want to mark variables as required or ignore noisy ones.
+`configenvy` works without a config file. Add `configenvy.config.json` when you want to make a few rules explicit: which variables are required, which ones are optional, which ones should be ignored, and where documentation should be checked.
 
 ```json
 {
@@ -234,24 +241,26 @@ configenvy works without a config file. Add `configenvy.config.json` to your pro
 }
 ```
 
-- `required`: env variables that must exist
-- `optional`: env variables that are allowed but not required
-- `ignore`: env variables to skip
+- `required`: variables that must appear in your env examples or project config
+- `optional`: variables that are allowed but should not fail checks when absent
+- `ignore`: variables to leave out of diagnostics, such as runtime defaults
 - `docs`: README or docs paths where descriptions should be checked
 
-Most setup failures are not mysterious. A variable was added in code but not in `.env.example`. A README table went stale. A token-like value slipped into a sample file. `configenvy` keeps that small contract honest.
+Most setup failures are not mysterious. A variable was added in code but not in `.env.example`. A README table went stale. A token-like value slipped into a sample file. `configenvy` keeps that small contract visible.
 
 ## Limitations
 
-`configenvy` uses lightweight static extraction in v0.1. It does not fully parse every language or framework, and it may miss dynamic names such as `process.env[prefix + "_TOKEN"]`. It is meant to catch the common setup-breaking drift first, not replace a full secrets scanner or type-aware compiler plugin.
+`configenvy` uses lightweight static analysis. It supports common JavaScript and TypeScript env patterns, framework presets, docs checks, and SARIF output, but it does not fully understand every language or runtime. Dynamic names such as `process.env[prefix + "_TOKEN"]` may still be missed.
+
+Use it as an early setup check, not as a replacement for a full secrets scanner, policy engine, or type-aware compiler plugin.
 
 ## Roadmap
 
 - PR summary output for GitHub Actions
-- More framework presets and auto-detection
+- Better preset detection and framework-specific guidance
 - Deeper AST parsing for fewer false positives and missed references
 - VS Code extension for local feedback while editing env docs
 
 ## Privacy and safety
 
-`configenvy` skips `.env` and non-example `.env.*` files by default. It runs locally, does not upload files, and does not call external APIs.
+`configenvy` skips `.env` and non-example `.env.*` files by default. It runs locally, does not upload files, and does not call external APIs. It reads example files, source files, docs, and selected config files only to report env documentation drift.

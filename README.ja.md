@@ -25,6 +25,12 @@ npx configenvy@latest doctor
 
 セットアップ失敗の多くは、地味なズレから起きます。コードに変数があるのに `.env.example` にない。README の表が古い。CI の secret がどこにも説明されていない。
 
+新しく設定を作る場合は、プロジェクトの構成を自動判定できます。
+
+```powershell
+npx configenvy@latest init --preset auto --dry-run
+```
+
 ## 出力例
 
 たとえば、コードにこう書かれていて:
@@ -60,6 +66,7 @@ WARN undocumented STRIPE_WEBHOOK_SECRET
 - 重要な環境変数が README や docs に書かれているか確認します。
 - 実在しそうなトークン、秘密値、本番URLなど、サンプルとして危険な値を検出します。
 - `.env.example` のコメントを、生成テーブルの説明文として使えます。
+- Next.js、Vite、Astro、Nuxt、SvelteKit、Vercel、Docker などの framework preset を検出できます。
 - README に貼り付けやすい Markdown 表を生成します。
 - 人が読むための通常出力と、CI やスクリプト向けの JSON 出力に対応します。
 
@@ -214,7 +221,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: sonsriver4815/configenvy/.github/actions/configenvy@v0.1.7
+      - uses: sonsriver4815/configenvy/.github/actions/configenvy@v0.2.0
         with:
           path: .
 ```
@@ -223,7 +230,7 @@ jobs:
 
 ## Config
 
-設定ファイルなしでも使えます。必須変数を明示したい場合や、ノイズになる変数を無視したい場合は、プロジェクトルートに `configenvy.config.json` を置きます。
+`configenvy` は設定ファイルなしでも使えます。必須変数、任意変数、無視したい変数、説明を探すドキュメントの場所を明示したい場合は、プロジェクトルートに `configenvy.config.json` を置きます。
 
 ```json
 {
@@ -234,24 +241,26 @@ jobs:
 }
 ```
 
-- `required`: 必ず存在してほしい環境変数
-- `optional`: 使ってよいが必須ではない環境変数
-- `ignore`: チェック対象から外す環境変数
+- `required`: env example やプロジェクト設定に必ず載せたい環境変数
+- `optional`: 使ってよいが、未設定でもチェックを失敗させない環境変数
+- `ignore`: `NODE_ENV` など、診断から外したい環境変数
 - `docs`: 説明を探す README や docs のパス
 
-セットアップ失敗の多くは、そこまで謎ではありません。コードに変数を追加したのに `.env.example` に書き忘れた。README の表が古くなった。サンプルにトークンっぽい値が入った。`configenvy` は、その小さな契約を崩れにくくします。
+セットアップ失敗の多くは、そこまで謎ではありません。コードに変数を追加したのに `.env.example` に書き忘れた。README の表が古くなった。サンプルにトークンっぽい値が入った。`configenvy` は、その小さな契約を見える状態に保ちます。
 
 ## Limitations
 
-v0.1 の `configenvy` は軽量な静的抽出を使っています。すべての言語やフレームワークを完全に解析するわけではなく、`process.env[prefix + "_TOKEN"]` のような動的な名前は見逃すことがあります。目的は、よくあるセットアップ破綻を早めに見つけることです。完全な secrets scanner や型対応の compiler plugin を置き換えるものではありません。
+`configenvy` は軽量な静的解析を使っています。よく使われる JavaScript / TypeScript の env 参照、framework preset、docs check、SARIF 出力に対応していますが、すべての言語や実行環境を完全に理解するわけではありません。`process.env[prefix + "_TOKEN"]` のような動的な名前は見逃すことがあります。
+
+目的は、よくあるセットアップ破綻を早めに見つけることです。完全な secrets scanner、policy engine、型対応の compiler plugin を置き換えるものではありません。
 
 ## Roadmap
 
 - GitHub Actions 向けの PR summary 出力
-- preset の追加と自動検出
-- false positive や見逃しを減らす、より深い AST 解析
+- preset 自動検出の精度改善と framework 別ガイド
+- false positive や見逃しを減らすための、より深い AST 解析
 - env docs を編集しながら確認できる VS Code 拡張
 
 ## Privacy and safety
 
-`configenvy` は、デフォルトで `.env` と example ではない `.env.*` ファイルを読みません。ローカルで実行され、ファイルをアップロードしたり外部APIを呼び出したりしません。
+`configenvy` は、デフォルトで `.env` と example ではない `.env.*` ファイルを読みません。ローカルで実行され、ファイルをアップロードしたり外部 API を呼び出したりしません。env documentation のずれを報告するために、example ファイル、ソースコード、ドキュメント、一部の設定ファイルだけを読みます。
