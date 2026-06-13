@@ -477,6 +477,22 @@ describe("configenvy cli", () => {
     ]);
   });
 
+  it("prefers framework presets over Vite when auto-detecting package.json", async () => {
+    const outcome = await invokeCli(["init", "examples/astro", "--preset", "auto", "--dry-run"], {
+      readFile: async (path) => {
+        if (String(path).endsWith("package.json")) {
+          return JSON.stringify({ devDependencies: { astro: "^5.0.0", vite: "^6.0.0" } });
+        }
+        const error = new Error("not found") as NodeJS.ErrnoException;
+        error.code = "ENOENT";
+        throw error;
+      }
+    });
+
+    expect(outcome.exitCode).toBeNull();
+    expect(outcome.logs[0]).toBe("Detected preset: astro\nReason: dependency \"astro\"");
+  });
+
   it("detects a framework preset with init --preset auto from config files", async () => {
     const outcome = await invokeCli(["init", "examples/vite", "--preset", "auto", "--dry-run"], {
       readFile: async (path) => {

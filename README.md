@@ -5,27 +5,50 @@
 [![GitHub Release](https://img.shields.io/github/v/release/sonsriver4815/configenvy)](https://github.com/sonsriver4815/configenvy/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Catch missing, stale, undocumented, and risky env variables before they break someone else's setup.
+Stop shipping broken setup docs.
 
-`configenvy` checks the places env vars tend to drift: `.env.example`, source code, README/docs, Docker Compose, GitHub Actions, and deployment config. It gives contributors a clear answer to a simple question: "What do I need to set before this project runs?"
+Find missing, stale, undocumented, and risky environment variables before your users hit `Error: DATABASE_URL is required`.
+
+English · [日本語](README.ja.md)
+
+What It Looks Like • What It Catches • GitHub Action • Framework Presets • Installation
+
+`configenvy` checks the places env vars drift: `.env.example`, source code, README/docs, Docker Compose, GitHub Actions, and deployment config. It gives contributors a clear answer to one setup question: "What do I need to set before this project runs?"
 
 ![configenvy workflow](docs/assets/configenvy-flow.svg)
+
+## Quick Demo
 
 ```powershell
 npx configenvy@latest doctor
 ```
 
-Without configenvy, setup failures often show up late:
+Most projects break for boring reasons: a variable exists in code, but not in `.env.example`; a README table is stale; CI uses a secret nobody documented.
 
-```text
-Error: DATABASE_URL is required
+## What It Looks Like
+
+Given this code:
+
+```ts
+console.log(process.env.DATABASE_URL);
+console.log(process.env.STRIPE_WEBHOOK_SECRET);
 ```
 
-With configenvy, the missing contract is visible up front:
+and this `.env.example`:
+
+```text
+APP_URL=http://localhost:3000
+```
+
+configenvy reports:
 
 ```text
 FAIL missing-example DATABASE_URL
-  DATABASE_URL is used by code or required by config but is missing from .env.example files.
+  DATABASE_URL is used by code but missing from .env.example.
+
+FAIL missing-example STRIPE_WEBHOOK_SECRET
+  STRIPE_WEBHOOK_SECRET is used by code but missing from .env.example.
+
 WARN undocumented STRIPE_WEBHOOK_SECRET
   STRIPE_WEBHOOK_SECRET is not mentioned in README or docs.
 ```
@@ -39,6 +62,20 @@ WARN undocumented STRIPE_WEBHOOK_SECRET
 - Reuses `.env.example` comments as variable descriptions in generated tables.
 - Generates Markdown tables you can paste into a README.
 - Prints readable output for humans and JSON for scripts or CI.
+
+## How It Compares
+
+| Feature | configenvy | dotenv-linter | grep/scripts |
+| --- | --- | --- | --- |
+| Checks code usage | yes | no | partial |
+| Checks README/docs drift | yes | no | no |
+| Checks GitHub Actions secrets | yes | no | partial |
+| Generates README env tables | yes | no | no |
+| Framework presets | yes | no | no |
+| GitHub Action | yes | manual | manual |
+| SARIF output | yes | no | no |
+
+configenvy does not replace your linter or secrets scanner. It catches setup contract drift: the small mismatch between code, examples, docs, and CI that makes a fresh clone fail.
 
 ## Install
 

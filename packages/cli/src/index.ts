@@ -321,10 +321,10 @@ async function detectPreset(rootDir: string, dependencies: CliDependencies): Pro
 
   const packageDetections: Array<[PresetName, string, string]> = [
     ["nextjs", "next", "dependency \"next\""],
-    ["vite", "vite", "dependency \"vite\""],
     ["astro", "astro", "dependency \"astro\""],
     ["nuxt", "nuxt", "dependency \"nuxt\""],
-    ["sveltekit", "@sveltejs/kit", "dependency \"@sveltejs/kit\""]
+    ["sveltekit", "@sveltejs/kit", "dependency \"@sveltejs/kit\""],
+    ["vite", "vite", "dependency \"vite\""]
   ];
   for (const [presetName, packageName, reason] of packageDetections) {
     if (packages.has(packageName)) {
@@ -334,10 +334,10 @@ async function detectPreset(rootDir: string, dependencies: CliDependencies): Pro
 
   const configDetections: Array<[PresetName, string[]]> = [
     ["nextjs", ["next.config.js", "next.config.mjs", "next.config.ts"]],
-    ["vite", ["vite.config.js", "vite.config.mjs", "vite.config.ts"]],
     ["astro", ["astro.config.js", "astro.config.mjs", "astro.config.ts"]],
     ["nuxt", ["nuxt.config.js", "nuxt.config.mjs", "nuxt.config.ts"]],
-    ["sveltekit", ["svelte.config.js", "svelte.config.ts"]]
+    ["sveltekit", ["svelte.config.js", "svelte.config.ts"]],
+    ["vite", ["vite.config.js", "vite.config.mjs", "vite.config.ts"]]
   ];
   for (const [presetName, files] of configDetections) {
     for (const file of files) {

@@ -5,27 +5,50 @@
 [![GitHub Release](https://img.shields.io/github/v/release/sonsriver4815/configenvy)](https://github.com/sonsriver4815/configenvy/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-環境変数の不足、古い記述、ドキュメント漏れ、危険なサンプル値を、セットアップでつまずく前に見つけます。
+壊れたセットアップ手順を、そのまま出さない。
+
+ユーザーが `Error: DATABASE_URL is required` にぶつかる前に、環境変数の不足、古い記述、ドキュメント漏れ、危険なサンプル値を見つけます。
+
+[English](README.md) · 日本語
+
+クイックデモ • 出力例 • チェック内容 • GitHub Action • インストール
 
 `configenvy` は、環境変数の情報が散らばりやすい場所をまとめて確認するCLIです。`.env.example`、ソースコード、README/docs、Docker Compose、GitHub Actions、デプロイ設定を照合し、「このプロジェクトを動かすには何を設定すればよいか」を明確にします。
 
 ![configenvy の仕組み](docs/assets/configenvy-flow-ja.svg)
 
+## クイックデモ
+
 ```powershell
 npx configenvy@latest doctor
 ```
 
-環境変数の不足は、実行して初めて気づくことがよくあります。
+セットアップ失敗の多くは、地味なズレから起きます。コードに変数があるのに `.env.example` にない。README の表が古い。CI の secret がどこにも説明されていない。
 
-```text
-Error: DATABASE_URL is required
+## 出力例
+
+たとえば、コードにこう書かれていて:
+
+```ts
+console.log(process.env.DATABASE_URL);
+console.log(process.env.STRIPE_WEBHOOK_SECRET);
 ```
 
-`configenvy` を使うと、必要な設定の抜け漏れを事前に確認できます。
+`.env.example` がこうなっているとします。
+
+```text
+APP_URL=http://localhost:3000
+```
+
+configenvy はこう報告します。
 
 ```text
 FAIL missing-example DATABASE_URL
-  DATABASE_URL is used by code or required by config but is missing from .env.example files.
+  DATABASE_URL is used by code but missing from .env.example.
+
+FAIL missing-example STRIPE_WEBHOOK_SECRET
+  STRIPE_WEBHOOK_SECRET is used by code but missing from .env.example.
+
 WARN undocumented STRIPE_WEBHOOK_SECRET
   STRIPE_WEBHOOK_SECRET is not mentioned in README or docs.
 ```
@@ -39,6 +62,20 @@ WARN undocumented STRIPE_WEBHOOK_SECRET
 - `.env.example` のコメントを、生成テーブルの説明文として使えます。
 - README に貼り付けやすい Markdown 表を生成します。
 - 人が読むための通常出力と、CI やスクリプト向けの JSON 出力に対応します。
+
+## 比較
+
+| 機能 | configenvy | dotenv-linter | grep/scripts |
+| --- | --- | --- | --- |
+| コード内の利用を確認 | 対応 | 非対応 | 一部 |
+| README/docs のズレを確認 | 対応 | 非対応 | 非対応 |
+| GitHub Actions secrets を確認 | 対応 | 非対応 | 一部 |
+| README 用の env 表を生成 | 対応 | 非対応 | 非対応 |
+| framework preset | 対応 | 非対応 | 非対応 |
+| GitHub Action | 対応 | 手動 | 手動 |
+| SARIF 出力 | 対応 | 非対応 | 非対応 |
+
+configenvy は linter や secrets scanner の代わりではありません。コード、サンプル、ドキュメント、CI の小さなズレを見つけて、clone直後のセットアップ失敗を減らすためのツールです。
 
 ## Install
 
