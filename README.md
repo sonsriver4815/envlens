@@ -125,6 +125,7 @@ configenvy doctor --strict [path]
 configenvy check --ci [path]
 configenvy check --ci --format sarif [path]
 configenvy init [path]
+configenvy init [path] --preset auto
 configenvy init [path] --preset nextjs
 configenvy init [path] --env-example
 configenvy init [path] --dry-run
@@ -134,7 +135,7 @@ configenvy table [path] --update README.md --dry-run
 configenvy explain DATABASE_URL [path]
 ```
 
-`init` creates `configenvy.config.json` without overwriting existing files. Add `--preset` for common stacks, `--env-example` to draft missing variables into `.env.example`, `--dry-run` to preview writes, or `--force` to overwrite generated files. Presets include Astro, Docker, Next.js, Nuxt, SvelteKit, Vercel, and Vite. See [Framework Presets](docs/presets.md).
+`init` creates `configenvy.config.json` without overwriting existing files. Add `--preset auto` to detect common stacks, `--preset <name>` to choose one directly, `--env-example` to draft missing variables into `.env.example`, `--dry-run` to preview writes, or `--force` to overwrite generated files. Presets include Astro, Docker, Next.js, Nuxt, SvelteKit, Vercel, and Vite. See [Framework Presets](docs/presets.md).
 
 ## What configenvy checks
 

@@ -171,11 +171,16 @@ const presetConfigs = {
 } satisfies Record<string, Partial<StarterConfig>>;
 
 const availablePresetNames = Object.keys(presetConfigs).sort();
-const availablePresetList = availablePresetNames.join(", ");
+const availablePresetList = ["auto", ...availablePresetNames].join(", ");
 
 type InitFile = {
   content: string;
   path: string;
+};
+
+type PresetResolution = {
+  config?: Partial<StarterConfig>;
+  message?: string;
 };
 
 const require = createRequire(import.meta.url);
@@ -224,12 +229,13 @@ export async function runInit(
 ): Promise<void> {
   const rootDir = dependencies.resolvePath(projectPath);
   const result = await dependencies.scanProject({ rootDir });
-  const preset = resolvePreset(options.preset, dependencies);
-  if (options.preset && !preset) return;
+  const preset = await resolvePreset(rootDir, options.preset, dependencies);
+  if (options.preset && !preset.config && options.preset !== "auto") return;
+  if (preset.message) dependencies.log(preset.message);
   const existingEnvExample = options.envExample && options.force
     ? await readOptionalText(dependencies.resolvePath(rootDir, ".env.example"), dependencies)
     : undefined;
-  const files = buildInitFiles(rootDir, result, Boolean(options.envExample), dependencies.resolvePath, existingEnvExample, preset);
+  const files = buildInitFiles(rootDir, result, Boolean(options.envExample), dependencies.resolvePath, existingEnvExample, preset.config);
 
   if (options.dryRun) {
     for (const file of files) {
@@ -293,14 +299,78 @@ export function buildInitFiles(
   return files;
 }
 
-function resolvePreset(name: string | undefined, dependencies: CliDependencies): Partial<StarterConfig> | undefined {
-  if (!name) return undefined;
+async function resolvePreset(rootDir: string, name: string | undefined, dependencies: CliDependencies): Promise<PresetResolution> {
+  if (!name) return {};
+  if (name === "auto") {
+    return detectPreset(rootDir, dependencies);
+  }
   if (name in presetConfigs) {
-    return presetConfigs[name as PresetName];
+    return { config: presetConfigs[name as PresetName] };
   }
   dependencies.error(`Unknown preset "${name}". Available presets: ${availablePresetList}.`);
   dependencies.exit(1);
-  return undefined;
+  return {};
+}
+
+async function detectPreset(rootDir: string, dependencies: CliDependencies): Promise<PresetResolution> {
+  const packageJson = await readPackageJson(rootDir, dependencies);
+  const packages = new Set(Object.keys({
+    ...packageJson?.dependencies,
+    ...packageJson?.devDependencies
+  }));
+
+  const packageDetections: Array<[PresetName, string, string]> = [
+    ["nextjs", "next", "dependency \"next\""],
+    ["vite", "vite", "dependency \"vite\""],
+    ["astro", "astro", "dependency \"astro\""],
+    ["nuxt", "nuxt", "dependency \"nuxt\""],
+    ["sveltekit", "@sveltejs/kit", "dependency \"@sveltejs/kit\""]
+  ];
+  for (const [presetName, packageName, reason] of packageDetections) {
+    if (packages.has(packageName)) {
+      return detectedPreset(presetName, reason);
+    }
+  }
+
+  const configDetections: Array<[PresetName, string[]]> = [
+    ["nextjs", ["next.config.js", "next.config.mjs", "next.config.ts"]],
+    ["vite", ["vite.config.js", "vite.config.mjs", "vite.config.ts"]],
+    ["astro", ["astro.config.js", "astro.config.mjs", "astro.config.ts"]],
+    ["nuxt", ["nuxt.config.js", "nuxt.config.mjs", "nuxt.config.ts"]],
+    ["sveltekit", ["svelte.config.js", "svelte.config.ts"]]
+  ];
+  for (const [presetName, files] of configDetections) {
+    for (const file of files) {
+      if (await readOptionalText(dependencies.resolvePath(rootDir, file), dependencies) !== undefined) {
+        return detectedPreset(presetName, `found ${file}`);
+      }
+    }
+  }
+
+  return { message: "No framework preset detected. Using the base config." };
+}
+
+function detectedPreset(name: PresetName, reason: string): PresetResolution {
+  return {
+    config: presetConfigs[name],
+    message: `Detected preset: ${name}\nReason: ${reason}`
+  };
+}
+
+async function readPackageJson(rootDir: string, dependencies: CliDependencies): Promise<{
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+} | undefined> {
+  const content = await readOptionalText(dependencies.resolvePath(rootDir, "package.json"), dependencies);
+  if (content === undefined) return undefined;
+  try {
+    return JSON.parse(content) as {
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+    };
+  } catch {
+    return undefined;
+  }
 }
 
 function mergeUnique(base: string[], extra: readonly string[]): string[] {

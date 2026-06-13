@@ -125,6 +125,7 @@ configenvy doctor --strict [path]
 configenvy check --ci [path]
 configenvy check --ci --format sarif [path]
 configenvy init [path]
+configenvy init [path] --preset auto
 configenvy init [path] --preset nextjs
 configenvy init [path] --env-example
 configenvy init [path] --dry-run
@@ -134,7 +135,7 @@ configenvy table [path] --update README.md --dry-run
 configenvy explain DATABASE_URL [path]
 ```
 
-`init` は `configenvy.config.json` を作ります。既存ファイルは上書きしません。よくある構成には `--preset`、`.env.example` の下書きも作りたい場合は `--env-example`、書き込み内容を事前確認したい場合は `--dry-run`、生成ファイルを上書きしたい場合は `--force` を使います。preset は Astro、Docker、Next.js、Nuxt、SvelteKit、Vercel、Vite に対応しています。詳細は [Framework Presets](docs/presets.md) を見てください。
+`init` は `configenvy.config.json` を作ります。既存ファイルは上書きしません。よくある構成を自動判定する場合は `--preset auto`、明示的に選ぶ場合は `--preset <name>`、`.env.example` の下書きも作りたい場合は `--env-example`、書き込み内容を事前確認したい場合は `--dry-run`、生成ファイルを上書きしたい場合は `--force` を使います。preset は Astro、Docker、Next.js、Nuxt、SvelteKit、Vercel、Vite に対応しています。詳細は [Framework Presets](docs/presets.md) を見てください。
 
 ## What configenvy checks
 

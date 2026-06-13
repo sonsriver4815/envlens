@@ -3,6 +3,7 @@
 `configenvy init --preset <name>` creates a starter `configenvy.config.json` tuned for common project types.
 
 ```powershell
+npx configenvy@latest init --preset auto
 npx configenvy@latest init --preset nextjs
 npx configenvy@latest init --preset vite
 npx configenvy@latest init --preset nuxt
@@ -11,6 +12,8 @@ npx configenvy@latest init --preset astro
 npx configenvy@latest init --preset docker
 npx configenvy@latest init --preset vercel
 ```
+
+Use `auto` when you want configenvy to pick a preset from `package.json` dependencies or common config files such as `next.config.ts`, `vite.config.ts`, `astro.config.ts`, `nuxt.config.ts`, and `svelte.config.js`.
 
 Presets keep detected runtime variables in `required`, then add common platform variables to `optional` or `ignore`.
 
