@@ -1,15 +1,34 @@
 ---
 name: Bug report
-about: Report an envlens bug
-title: ""
+about: Report something configenvy detects incorrectly or fails to handle
+title: "Bug: "
 labels: bug
 assignees: ""
 ---
 
-## What happened?
+## Summary
 
-## Expected behavior
+## Steps to reproduce
 
-## Reproduction
+1.
+2.
+3.
 
-## envlens output
+## Expected result
+
+## Actual result
+
+## Minimal example
+
+```text
+Paste the smallest config, env example, or command output that reproduces the issue.
+```
+
+## Environment
+
+- configenvy version:
+- Node.js version:
+- Package manager:
+- Operating system:
+
+## Notes
