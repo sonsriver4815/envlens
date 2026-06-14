@@ -32,6 +32,10 @@
     "@types/node": "^24.0.0",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2",
-    "vitest": "^4.1.8"
+    "vitest": "^3.2.6"
+  },
+  "overrides": {
+    "esbuild": "^0.28.1",
+    "vite": "^6.4.2"
   }
 }
